@@ -23,14 +23,17 @@ import android.content.*
 import android.content.pm.PackageManager
 import android.os.*
 import android.util.Log
+import android.view.LayoutInflater
 import android.widget.Toast
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import java.io.IOException
 import java.security.Key
 import android.widget.ArrayAdapter
+import android.widget.Button
 import android.widget.ListView
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.lifecycle.ViewModel
 import java.util.*
 import kotlin.collections.ArrayList
 
@@ -45,8 +48,8 @@ private const val LOCATION_PERMISSION_REQUEST_CODE = 2
 class MainActivity : AppCompatActivity() {
 
     private  val DevicesNames = ArrayList<String>()
-    val PairedDevices:MutableMap<String,String> = mutableMapOf<String, String>()
-    val DiscoveredDevices:MutableMap<String,String> = mutableMapOf<String, String>()
+    val PairedDevices:MutableMap<String,BluetoothDevice> = mutableMapOf<String, BluetoothDevice>()
+    val DiscoveredDevices:MutableMap<String,BluetoothDevice> = mutableMapOf<String, BluetoothDevice>()
     private val DiscoveredDevicesNames = ArrayList<String>()
 
 
@@ -123,15 +126,18 @@ class MainActivity : AppCompatActivity() {
                     val deviceHardwareAddress = device?.address // MAC address
                     if (deviceName != null) {
                         DiscoveredDevicesNames.add(deviceName)
-                        DiscoveredDevices[deviceName] = deviceHardwareAddress.toString()
+                        DiscoveredDevices[deviceName] = device
                         val adapter = ArrayAdapter(this@MainActivity, android.R.layout.simple_list_item_1, DiscoveredDevicesNames)
-                        val listView = findViewById<ListView>(R.id.listView)
+                        val dashboardPanel = LayoutInflater.from(this@MainActivity).inflate(R.layout.fragment_dashboard, null)
+                        val listView = dashboardPanel.findViewById<ListView>(R.id.listView)
                         listView.adapter = adapter
                     }
                 }
             }
         }
     }
+
+
 
     override fun onDestroy() {
         super.onDestroy()
@@ -146,7 +152,7 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
 
 
-       /* val navView: BottomNavigationView = binding.navView
+       val navView: BottomNavigationView = findViewById(R.id.nav_view)
 
         val navController = findNavController(R.id.nav_host_fragment_activity_main)
         // Passing each menu ID as a set of Ids because each
@@ -157,15 +163,22 @@ class MainActivity : AppCompatActivity() {
             )
         )
         setupActionBarWithNavController(navController, appBarConfiguration)
-        navView.setupWithNavController(navController)*/
-        Toast.makeText(this@MainActivity, "Entrando en función bluetooth!", Toast.LENGTH_SHORT).show()
-       BluetoothFun();
+        navView.setupWithNavController(navController)
+
+        /*val dashboardPanel = LayoutInflater.from(this).inflate(R.layout.fragment_dashboard, null)
+        val arrayTest = ArrayList<String>()
+        arrayTest.add("Hola")
+        arrayTest.add("Adios")
+        val DevicesListView = dashboardPanel.findViewById<ListView>(R.id.listView)
+        val listAdapter : ArrayAdapter<String> = ArrayAdapter(this, android.R.layout.simple_list_item_1, arrayTest)
+        DevicesListView.adapter = listAdapter */
+
 
     }
 
     //Función para encontrar, seleccioanr y conectar el dispositivo bluetooth OBD2
     fun BluetoothFun() {
-        val isLocationPermissionGranted = hasPermission(Manifest.permission.ACCESS_FINE_LOCATION)
+       /* val isLocationPermissionGranted = hasPermission(Manifest.permission.ACCESS_FINE_LOCATION)
         if (bluetoothAdapter?.isEnabled == false) {
             val enableBtIntent = Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE)
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && !isLocationPermissionGranted) {
@@ -218,14 +231,14 @@ class MainActivity : AppCompatActivity() {
                 val deviceName = device.name
                 val deviceHardwareAddress = device.address // MAC address
                 //DevicesNames.add(deviceName)
-                PairedDevices[deviceName] = deviceHardwareAddress
+                PairedDevices[deviceName] = device
                 DevicesNames.add(deviceName)
             }
             Toast.makeText(this@MainActivity, "Saliendo de obtener paired devices", Toast.LENGTH_SHORT).show()
+        val dashboardPanel = LayoutInflater.from(this).inflate(R.layout.fragment_dashboard, null)
 
-            var DevicesListView = findViewById<ListView>(R.id.listView)
-            val listAdapter : ArrayAdapter<String>
-            listAdapter = ArrayAdapter(this, android.R.layout.simple_list_item_1, DevicesNames)
+            val DevicesListView = dashboardPanel.findViewById<ListView>(R.id.listView)
+        val listAdapter : ArrayAdapter<String> = ArrayAdapter(this, android.R.layout.simple_list_item_1, DevicesNames)
             DevicesListView.adapter = listAdapter
 
             val filter = IntentFilter(BluetoothDevice.ACTION_FOUND)
@@ -239,8 +252,130 @@ class MainActivity : AppCompatActivity() {
                 bluetoothAdapter?.cancelDiscovery()
             }, 10000)
 
-        //Connect to the OBD2 reader
-        val device = bluetoothAdapter?.getRemoteDevice(PairedDevices["OBDII"])
-           val socket = device?.createRfcommSocketToServiceRecord(UUID.fromString("00001101-0000-1000-8000-00805F9B34FB"))
+*/
+        }
+
+        public fun getPairedDevices(): ArrayList<String> {
+            val isLocationPermissionGranted = hasPermission(Manifest.permission.ACCESS_FINE_LOCATION)
+            if (bluetoothAdapter?.isEnabled == false) {
+                val enableBtIntent = Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE)
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && !isLocationPermissionGranted) {
+                    requestLocationPermission()
+                } else {
+                    if (ActivityCompat.checkSelfPermission(
+                            this,
+                            Manifest.permission.BLUETOOTH_SCAN
+                        ) != PackageManager.PERMISSION_GRANTED
+                    ) {
+
+                        val myNewVal = ActivityCompat.checkSelfPermission(
+                            this,
+                            Manifest.permission.BLUETOOTH_SCAN
+                        )
+                        val myManifest = Manifest.permission.BLUETOOTH_SCAN
+                        Log.d("console", "before crash")
+                        Log.d("console", "Manifest.permission.BLUETOOTH_SCAN: $myManifest")
+                        Log.d("console", "My val: $myNewVal")
+                        Log.d(
+                            "console",
+                            "PackageManager.PERMISSION_GRANTED: ${PackageManager.PERMISSION_GRANTED}"
+                        )
+                        Log.d(
+                            "console",
+                            "PackageManager.PERMISSION_GRANTED: ${Manifest.permission.BLUETOOTH_SCAN}"
+                        )
+
+
+                        return DevicesNames
+                    }
+                    startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT)
+                }
+            }
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                requestMultiplePermissions.launch(arrayOf(
+                    Manifest.permission.BLUETOOTH_SCAN,
+                    Manifest.permission.BLUETOOTH_CONNECT))
+            }
+            else{
+                val enableBtIntent = Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE)
+                requestBluetooth.launch(enableBtIntent)
+            }
+
+            val pairedDevices: Set<BluetoothDevice>? = bluetoothAdapter?.bondedDevices
+            Toast.makeText(this@MainActivity, "Entrando de obtener paired devices", Toast.LENGTH_SHORT).show()
+
+            pairedDevices?.forEach { device ->
+                val deviceName = device.name
+                val deviceHardwareAddress = device.address // MAC address
+                //DevicesNames.add(deviceName)
+                PairedDevices[deviceName] = device
+                DevicesNames.add(deviceName)
+            }
+            Toast.makeText(this@MainActivity, "Saliendo de obtener paired devices", Toast.LENGTH_SHORT).show()
+           /* val dashboardPanel = LayoutInflater.from(this).inflate(R.layout.fragment_dashboard, null)
+
+            val DevicesListView = dashboardPanel.findViewById<ListView>(R.id.listView)
+            val listAdapter : ArrayAdapter<String> = ArrayAdapter(this, android.R.layout.simple_list_item_1, DevicesNames)
+            DevicesListView.adapter = listAdapter */
+            return DevicesNames
+        }
+
+        public fun findDevices() {
+            val isLocationPermissionGranted = hasPermission(Manifest.permission.ACCESS_FINE_LOCATION)
+            if (bluetoothAdapter?.isEnabled == false) {
+                val enableBtIntent = Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE)
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && !isLocationPermissionGranted) {
+                    requestLocationPermission()
+                } else {
+                    if (ActivityCompat.checkSelfPermission(
+                            this,
+                            Manifest.permission.BLUETOOTH_SCAN
+                        ) != PackageManager.PERMISSION_GRANTED
+                    ) {
+
+                        val myNewVal = ActivityCompat.checkSelfPermission(
+                            this,
+                            Manifest.permission.BLUETOOTH_SCAN
+                        )
+                        val myManifest = Manifest.permission.BLUETOOTH_SCAN
+                        Log.d("console", "before crash")
+                        Log.d("console", "Manifest.permission.BLUETOOTH_SCAN: $myManifest")
+                        Log.d("console", "My val: $myNewVal")
+                        Log.d(
+                            "console",
+                            "PackageManager.PERMISSION_GRANTED: ${PackageManager.PERMISSION_GRANTED}"
+                        )
+                        Log.d(
+                            "console",
+                            "PackageManager.PERMISSION_GRANTED: ${Manifest.permission.BLUETOOTH_SCAN}"
+                        )
+
+
+                        return
+                    }
+                    startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT)
+                }
+            }
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                requestMultiplePermissions.launch(arrayOf(
+                    Manifest.permission.BLUETOOTH_SCAN,
+                    Manifest.permission.BLUETOOTH_CONNECT))
+            }
+            else{
+                val enableBtIntent = Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE)
+                requestBluetooth.launch(enableBtIntent)
+            }
+            val filter = IntentFilter(BluetoothDevice.ACTION_FOUND)
+            registerReceiver(receiver, filter)
+
+            //Start discovery
+            bluetoothAdapter?.startDiscovery()
+
+            //Stop discovery after 10 seconds
+            Handler(Looper.getMainLooper()).postDelayed({
+                bluetoothAdapter?.cancelDiscovery()
+            }, 10000)
         }
     }
