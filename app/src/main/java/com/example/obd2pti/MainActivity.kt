@@ -127,10 +127,10 @@ class MainActivity : AppCompatActivity() {
                     if (deviceName != null) {
                         DiscoveredDevicesNames.add(deviceName)
                         DiscoveredDevices[deviceName] = device
-                        val adapter = ArrayAdapter(this@MainActivity, android.R.layout.simple_list_item_1, DiscoveredDevicesNames)
+                      /*  val adapter = ArrayAdapter(this@MainActivity, android.R.layout.simple_list_item_1, DiscoveredDevicesNames)
                         val dashboardPanel = LayoutInflater.from(this@MainActivity).inflate(R.layout.fragment_dashboard, null)
                         val listView = dashboardPanel.findViewById<ListView>(R.id.listView)
-                        listView.adapter = adapter
+                        listView.adapter = adapter*/
                     }
                 }
             }
@@ -322,7 +322,8 @@ class MainActivity : AppCompatActivity() {
         }
 
         public fun findDevices(): ArrayList<String> {
-            DiscoveredDevices.clear()
+            // DiscoveredDevices.clear()
+            // DiscoveredDevicesNames.clear()
             val isLocationPermissionGranted = hasPermission(Manifest.permission.ACCESS_FINE_LOCATION)
             if (bluetoothAdapter?.isEnabled == false) {
                 val enableBtIntent = Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE)
@@ -378,6 +379,13 @@ class MainActivity : AppCompatActivity() {
             Handler(Looper.getMainLooper()).postDelayed({
                 bluetoothAdapter?.cancelDiscovery()
             }, 10000)
+            DiscoveredDevicesNames.clear()
+            DiscoveredDevices.forEach() { key, device ->
+
+                DiscoveredDevicesNames.add(device.name)
+            }
             return DiscoveredDevicesNames;
         }
+
+
     }

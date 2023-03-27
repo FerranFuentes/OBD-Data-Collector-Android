@@ -19,7 +19,7 @@ class DashboardFragment : Fragment() {
     // This property is only valid between onCreateView and
     // onDestroyView.
     private val binding get() = _binding!!
-    private val DiscoveredDevicesNames = ArrayList<String>()
+    private var DiscoveredDevicesNames = ArrayList<String>()
     private var PairedDevicesNames = ArrayList<String>()
 
 
@@ -47,17 +47,22 @@ class DashboardFragment : Fragment() {
         binding.pairedbutton.setOnClickListener {
             Toast.makeText(context, "Paired Devices", Toast.LENGTH_SHORT).show()
             PairedDevicesNames = mainAct.getPairedDevices()
+            val listAdapter = ArrayAdapter<String>(mainAct, android.R.layout.simple_list_item_1, PairedDevicesNames)
+            binding.listView.adapter = listAdapter
         }
 
         binding.discoverbutton.setOnClickListener {
             Toast.makeText(context, "Discover Devices", Toast.LENGTH_SHORT).show()
-            mainAct.findDevices()
+            DiscoveredDevicesNames= mainAct.findDevices()
+            val listAdapter = ArrayAdapter<String>(mainAct, android.R.layout.simple_list_item_1, DiscoveredDevicesNames)
+            binding.listView.adapter = listAdapter
+            if (DiscoveredDevicesNames.isEmpty()){
+                Toast.makeText(context, "No Devices Found", Toast.LENGTH_SHORT).show()
+            }
         }
 
         //Toast.makeText(context, "Hola Caracola", Toast.LENGTH_SHORT).show()
 
-        val listAdapter = ArrayAdapter<String>(mainAct, android.R.layout.simple_list_item_1, PairedDevicesNames)
-        binding.listView.adapter = listAdapter
 
         return root
     }
