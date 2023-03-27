@@ -321,7 +321,8 @@ class MainActivity : AppCompatActivity() {
             return DevicesNames
         }
 
-        public fun findDevices() {
+        public fun findDevices(): ArrayList<String> {
+            DiscoveredDevices.clear()
             val isLocationPermissionGranted = hasPermission(Manifest.permission.ACCESS_FINE_LOCATION)
             if (bluetoothAdapter?.isEnabled == false) {
                 val enableBtIntent = Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE)
@@ -352,7 +353,7 @@ class MainActivity : AppCompatActivity() {
                         )
 
 
-                        return
+                        return DiscoveredDevicesNames
                     }
                     startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT)
                 }
@@ -377,5 +378,6 @@ class MainActivity : AppCompatActivity() {
             Handler(Looper.getMainLooper()).postDelayed({
                 bluetoothAdapter?.cancelDiscovery()
             }, 10000)
+            return DiscoveredDevicesNames;
         }
     }
