@@ -61,6 +61,17 @@ class DashboardFragment : Fragment() {
             }
         }
 
+        binding.listView.onItemClickListener = AdapterView.OnItemClickListener { parent, view, position, id ->
+            val item = parent.getItemAtPosition(position) as String
+            Toast.makeText(context, "Connecting to $item", Toast.LENGTH_SHORT).show()
+            var connection_status = mainAct.connectToBLDevice(item)
+            if (connection_status == 1) {
+                Toast.makeText(context, "Connected to $item", Toast.LENGTH_SHORT).show()
+            } else {
+                Toast.makeText(context, "Failed to connect to $item", Toast.LENGTH_SHORT).show()
+            }
+        }
+
         //Toast.makeText(context, "Hola Caracola", Toast.LENGTH_SHORT).show()
 
 

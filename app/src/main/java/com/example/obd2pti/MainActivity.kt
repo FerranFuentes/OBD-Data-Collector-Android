@@ -12,7 +12,6 @@ import androidx.navigation.ui.setupActionBarWithNavController
 import androidx.navigation.ui.setupWithNavController
 import com.example.obd2pti.databinding.ActivityMainBinding
 import com.github.eltonvs.obd.connection.ObdDeviceConnection
-import java.io.InputStream
 import android.bluetooth.*
 import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothAdapter
@@ -22,18 +21,20 @@ import android.bluetooth.le.*
 import android.content.*
 import android.content.pm.PackageManager
 import android.os.*
+import android.util.JsonWriter
 import android.util.Log
 import android.view.LayoutInflater
 import android.widget.Toast
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import java.io.IOException
 import java.security.Key
 import android.widget.ArrayAdapter
 import android.widget.Button
 import android.widget.ListView
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.lifecycle.ViewModel
+import com.github.eltonvs.obd.command.engine.SpeedCommand
+import java.io.*
 import java.util.*
 import kotlin.collections.ArrayList
 
@@ -45,12 +46,15 @@ private const val LOCATION_PERMISSION_REQUEST_CODE = 2
 
 
 
-class MainActivity : AppCompatActivity() {
 
-    private  val DevicesNames = ArrayList<String>()
+ class MainActivity : AppCompatActivity() {
+    private val DevicesNames = ArrayList<String>()
     val PairedDevices:MutableMap<String,BluetoothDevice> = mutableMapOf<String, BluetoothDevice>()
     val DiscoveredDevices:MutableMap<String,BluetoothDevice> = mutableMapOf<String, BluetoothDevice>()
     private val DiscoveredDevicesNames = ArrayList<String>()
+    //abstract var inputStream:InputStream
+   // abstract var outputStream:OutputStream
+    var connected = false
 
 
     fun Context.hasPermission(permissionType: String): Boolean {
@@ -137,8 +141,6 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-
-
     override fun onDestroy() {
         super.onDestroy()
 
@@ -164,7 +166,9 @@ class MainActivity : AppCompatActivity() {
         )
         setupActionBarWithNavController(navController, appBarConfiguration)
         navView.setupWithNavController(navController)
+        val path = filesDir
 
+        testjson(path)
         /*val dashboardPanel = LayoutInflater.from(this).inflate(R.layout.fragment_dashboard, null)
         val arrayTest = ArrayList<String>()
         arrayTest.add("Hola")
@@ -387,5 +391,121 @@ class MainActivity : AppCompatActivity() {
             return DiscoveredDevicesNames;
         }
 
+        public fun connectToBLDevice(device_name:String): Int {
+            val device:BluetoothDevice
+            connected = false
+            if (PairedDevices.containsKey(device_name)) {
+                device = PairedDevices[device_name]!!
+            }
+            else if (DiscoveredDevices.containsKey(device_name)) {
+                device = DiscoveredDevices[device_name]!!
+            }
+            else {
+                return 0
+            }
+            val isLocationPermissionGranted = hasPermission(Manifest.permission.ACCESS_FINE_LOCATION)
+            if (bluetoothAdapter?.isEnabled == false) {
+                val enableBtIntent = Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE)
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && !isLocationPermissionGranted) {
+                    requestLocationPermission()
+                } else {
+                    if (ActivityCompat.checkSelfPermission(
+                            this,
+                            Manifest.permission.BLUETOOTH_SCAN
+                        ) != PackageManager.PERMISSION_GRANTED
+                    ) {
+
+                        val myNewVal = ActivityCompat.checkSelfPermission(
+                            this,
+                            Manifest.permission.BLUETOOTH_SCAN
+                        )
+                        val myManifest = Manifest.permission.BLUETOOTH_SCAN
+                        Log.d("console", "before crash")
+                        Log.d("console", "Manifest.permission.BLUETOOTH_SCAN: $myManifest")
+                        Log.d("console", "My val: $myNewVal")
+                        Log.d(
+                            "console",
+                            "PackageManager.PERMISSION_GRANTED: ${PackageManager.PERMISSION_GRANTED}"
+                        )
+                        Log.d(
+                            "console",
+                            "PackageManager.PERMISSION_GRANTED: ${Manifest.permission.BLUETOOTH_SCAN}"
+                        )
+
+
+                        return 0
+                    }
+                    startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT)
+                }
+            }
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                requestMultiplePermissions.launch(arrayOf(
+                    Manifest.permission.BLUETOOTH_SCAN,
+                    Manifest.permission.BLUETOOTH_CONNECT))
+            }
+            else{
+                val enableBtIntent = Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE)
+                requestBluetooth.launch(enableBtIntent)
+            }
+            val filter = IntentFilter(BluetoothDevice.ACTION_FOUND)
+            registerReceiver(receiver, filter)
+
+
+            //Connect to OBD2 bluetooth device
+            val uuid = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB")
+            val socket = device.createRfcommSocketToServiceRecord(uuid)
+            socket.connect()
+            val inputStream = socket.inputStream
+            val outputStream = socket.outputStream
+            connected = true
+            return 1
+        }
+
+        suspend fun ob2Connection(path: File, outputStream: OutputStream, inputStream: InputStream) {
+            if (!connected) {
+                Toast.makeText(this@MainActivity, "No hay conexión", Toast.LENGTH_SHORT).show()
+                return
+            }
+            val obdConnection = ObdDeviceConnection(inputStream, outputStream)
+            val response = obdConnection.run(SpeedCommand());
+
+            val letDirectory = File(path, "LET")
+            if (!letDirectory.exists()) {
+                letDirectory.mkdir()
+            }
+            val file = File(letDirectory, "export.json")
+            if (!file.exists()) {
+                file.createNewFile()
+            }
+            val fileWriter = FileWriter(file, true)
+            val jsonWriter = JsonWriter(fileWriter)
+            jsonWriter.beginObject()
+            jsonWriter.name("speed").value(response.value)
+
+        }
+        fun testjson(path:File) {
+            val letDirectory = File(path, "LET")
+            if (!letDirectory.exists()) {
+                letDirectory.mkdir()
+            }
+            val file = File(letDirectory, "export.json")
+            if (!file.exists()) {
+                file.createNewFile()
+            }
+            val fileWriter = FileWriter(file, true)
+            val jsonWriter = JsonWriter(fileWriter)
+            jsonWriter.beginObject()
+            jsonWriter.name("speed").value(10)
+            jsonWriter.name("rpm").value(1000)
+            jsonWriter.name("throttle").value(0.5)
+            jsonWriter.name("engineLoad").value(0.5)
+            jsonWriter.name("engineCoolantTemp").value(100)
+            jsonWriter.name("fuelLevel").value(0.5)
+            jsonWriter.endObject()
+            jsonWriter.close()
+            fileWriter.close()
+            return
+        }
 
     }
