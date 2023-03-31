@@ -14,8 +14,10 @@
         android:visibility="visible"
         app:layout_constraintBottom_toTopOf="@+id/discoverbutton"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.486"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.352" />
 
     <Button
         android:id="@+id/pairedbutton"
@@ -32,7 +34,7 @@
         android:id="@+id/discoverbutton"
         android:layout_width="346dp"
         android:layout_height="83dp"
-        android:layout_marginBottom="44dp"
+        android:layout_marginBottom="76dp"
         android:text="Discover Devices"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"

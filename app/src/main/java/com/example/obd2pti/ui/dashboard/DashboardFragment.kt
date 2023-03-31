@@ -38,6 +38,7 @@ class DashboardFragment : Fragment() {
 
         val rootView = inflater.inflate(R.layout.fragment_dashboard, container, false)
         mainAct = activity as MainActivity
+        mainAct.startDiscovery()
         //val pairedBtn = rootView.findViewById<Button>(R.id.pairedbutton)
         //val discoverBtn = rootView.findViewById<Button>(R.id.discoverbutton)
 
@@ -53,7 +54,7 @@ class DashboardFragment : Fragment() {
 
         binding.discoverbutton.setOnClickListener {
             Toast.makeText(context, "Discover Devices", Toast.LENGTH_SHORT).show()
-            DiscoveredDevicesNames= mainAct.findDevices()
+            DiscoveredDevicesNames= mainAct.getDiscoveredDevices()
             val listAdapter = ArrayAdapter<String>(mainAct, android.R.layout.simple_list_item_1, DiscoveredDevicesNames)
             binding.listView.adapter = listAdapter
             if (DiscoveredDevicesNames.isEmpty()){
@@ -84,5 +85,6 @@ class DashboardFragment : Fragment() {
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
+        mainAct.stopDiscovery()
     }
 }
