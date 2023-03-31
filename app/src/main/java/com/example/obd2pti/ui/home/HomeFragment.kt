@@ -32,14 +32,25 @@ class HomeFragment : Fragment() {
         _binding = FragmentHomeBinding.inflate(inflater, container, false)
         val root: View = binding.root
 
-        val textView: TextView = binding.textHome
+        val textViewConnection: TextView = binding.textConnection
         homeViewModel.text.observe(viewLifecycleOwner) {
             if (mainAct.connected) {
-                textView.text = "Conectado al dispositivo"
-                textView.setTextColor(Color.GREEN)
+                textViewConnection.text = "Conectado al dispositivo"
+                textViewConnection.setTextColor(Color.GREEN)
             } else {
-                textView.text = "Not Connected"
-                textView.setTextColor(Color.RED)
+                textViewConnection.text = "Not Connected"
+                textViewConnection.setTextColor(Color.RED)
+            }
+        }
+
+        val textViewRecoleccion: TextView = binding.textRecoleccion
+        homeViewModel.text.observe(viewLifecycleOwner) {
+            if (mainAct.recolección) {
+                textViewRecoleccion.text = "Recolección: ON"
+                textViewRecoleccion.setTextColor(Color.GREEN)
+            } else {
+                textViewRecoleccion.text = "Recolección: OFF"
+                textViewRecoleccion.setTextColor(Color.RED)
             }
         }
         return root

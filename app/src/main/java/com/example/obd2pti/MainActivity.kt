@@ -33,7 +33,16 @@ import android.widget.Button
 import android.widget.ListView
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.lifecycle.ViewModel
+import com.github.eltonvs.obd.command.*
+import com.github.eltonvs.obd.command.engine.LoadCommand
+import com.github.eltonvs.obd.command.engine.RPMCommand
 import com.github.eltonvs.obd.command.engine.SpeedCommand
+import com.github.eltonvs.obd.command.engine.ThrottlePositionCommand
+import com.github.eltonvs.obd.command.fuel.FuelConsumptionRateCommand
+import com.github.eltonvs.obd.command.fuel.FuelLevelCommand
+import com.github.eltonvs.obd.command.temperature.EngineCoolantTemperatureCommand
+import com.github.eltonvs.obd.command.temperature.OilTemperatureCommand
+import kotlinx.coroutines.delay
 import java.io.*
 import java.util.*
 import kotlin.collections.ArrayList
@@ -55,6 +64,17 @@ private const val LOCATION_PERMISSION_REQUEST_CODE = 2
     //abstract var inputStream:InputStream
    // abstract var outputStream:OutputStream
     var connected = false
+    var recolección = false
+     //Datos OBD2
+        var speed = "0"
+        var rpm = "0"
+        var coolantTemp = "0"
+        var oilTemp = "0"
+        var throttlePos = "0"
+        var engineLoad = "0"
+        var fuelLevel = "0"
+        var fuelConsumption = "0"
+
 
 
     fun Context.hasPermission(permissionType: String): Boolean {
@@ -432,8 +452,6 @@ private const val LOCATION_PERMISSION_REQUEST_CODE = 2
                 Toast.makeText(this@MainActivity, "No hay conexión", Toast.LENGTH_SHORT).show()
                 return
             }
-            val obdConnection = ObdDeviceConnection(inputStream, outputStream)
-            val response = obdConnection.run(SpeedCommand());
 
             val letDirectory = File(path, "LET")
             if (!letDirectory.exists()) {
@@ -445,8 +463,42 @@ private const val LOCATION_PERMISSION_REQUEST_CODE = 2
             }
             val fileWriter = FileWriter(file, true)
             val jsonWriter = JsonWriter(fileWriter)
-            jsonWriter.beginObject()
-            jsonWriter.name("speed").value(response.value)
+
+            recolección = true
+            val obdConnection = ObdDeviceConnection(inputStream, outputStream)
+            //Lanzamos una petición de datos repetidamente cada medio segundo
+            while (true and !recolección) {
+                delay(500)
+                var response = obdConnection.run(SpeedCommand());
+                speed = response.value
+                response = obdConnection.run(RPMCommand());
+                rpm = response.value
+                response = obdConnection.run(LoadCommand());
+                engineLoad = response.value
+                response = obdConnection.run(ThrottlePositionCommand());
+                throttlePos = response.value
+                response = obdConnection.run(EngineCoolantTemperatureCommand())
+                coolantTemp = response.value
+                response = obdConnection.run(OilTemperatureCommand())
+                oilTemp = response.value
+                response = obdConnection.run(FuelLevelCommand());
+                fuelLevel = response.value
+                response = obdConnection.run(FuelConsumptionRateCommand());
+                fuelConsumption = response.value
+
+                jsonWriter.beginObject()
+                jsonWriter.name("speed").value(speed)
+                jsonWriter.name("rpm").value(rpm)
+                jsonWriter.name("throttle").value(throttlePos)
+                jsonWriter.name("engineLoad").value(engineLoad)
+                jsonWriter.name("engineCoolantTemp").value(coolantTemp)
+                jsonWriter.name("oilTemp").value(oilTemp)
+                jsonWriter.name("fuelLevel").value(fuelLevel)
+                jsonWriter.name("fuelConsumption").value(fuelConsumption)
+                jsonWriter.endObject()
+
+            }
+
 
         }
         fun testjson(path:File) {
