@@ -53,6 +53,19 @@ class HomeFragment : Fragment() {
                 textViewRecoleccion.setTextColor(Color.RED)
             }
         }
+
+        binding.recoleccionButton.setOnClickListener {
+            if (mainAct.recolección) {
+                mainAct.recolección = false
+                textViewRecoleccion.text = "Recolección: OFF"
+                textViewRecoleccion.setTextColor(Color.RED)
+            } else {
+                mainAct.recolección = true
+                textViewRecoleccion.text = "Recolección: ON"
+                textViewRecoleccion.setTextColor(Color.GREEN)
+            }
+        }
+
         return root
     }
 

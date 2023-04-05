@@ -1,10 +1,12 @@
 package com.example.obd2pti.ui.dashboard
 
+import android.os.Build
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.*
+import androidx.annotation.RequiresApi
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import com.example.obd2pti.MainActivity
@@ -23,6 +25,7 @@ class DashboardFragment : Fragment() {
     private var PairedDevicesNames = ArrayList<String>()
 
 
+    @RequiresApi(Build.VERSION_CODES.O)
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -38,7 +41,6 @@ class DashboardFragment : Fragment() {
 
         val rootView = inflater.inflate(R.layout.fragment_dashboard, container, false)
         mainAct = activity as MainActivity
-        mainAct.startDiscovery()
         //val pairedBtn = rootView.findViewById<Button>(R.id.pairedbutton)
         //val discoverBtn = rootView.findViewById<Button>(R.id.discoverbutton)
 
@@ -85,6 +87,5 @@ class DashboardFragment : Fragment() {
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
-        mainAct.stopDiscovery()
     }
 }

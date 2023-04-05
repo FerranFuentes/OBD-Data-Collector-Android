@@ -4,48 +4,54 @@ import android.Manifest
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.app.AlertDialog
-import com.google.android.material.bottomnavigation.BottomNavigationView
+import android.bluetooth.*
+import android.bluetooth.le.*
+import android.content.*
+import android.content.ContentValues.TAG
+import android.content.pm.PackageManager
+import android.os.*
+import android.system.Os.socket
+import android.util.JsonWriter
+import android.util.Log
+import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import androidx.navigation.findNavController
 import androidx.navigation.ui.AppBarConfiguration
 import androidx.navigation.ui.setupActionBarWithNavController
 import androidx.navigation.ui.setupWithNavController
 import com.example.obd2pti.databinding.ActivityMainBinding
-import com.github.eltonvs.obd.connection.ObdDeviceConnection
-import android.bluetooth.*
-import android.bluetooth.BluetoothDevice
-import android.bluetooth.BluetoothAdapter
-import android.bluetooth.BluetoothServerSocket
-import android.bluetooth.BluetoothManager
-import android.bluetooth.le.*
-import android.content.*
-import android.content.pm.PackageManager
-import android.os.*
-import android.util.JsonWriter
-import android.util.Log
-import android.view.LayoutInflater
-import android.widget.Toast
-import androidx.core.app.ActivityCompat
-import androidx.core.content.ContextCompat
-import java.security.Key
-import android.widget.ArrayAdapter
-import android.widget.Button
-import android.widget.ListView
-import androidx.activity.result.contract.ActivityResultContracts
-import androidx.lifecycle.ViewModel
-import com.github.eltonvs.obd.command.*
-import com.github.eltonvs.obd.command.engine.LoadCommand
-import com.github.eltonvs.obd.command.engine.RPMCommand
-import com.github.eltonvs.obd.command.engine.SpeedCommand
-import com.github.eltonvs.obd.command.engine.ThrottlePositionCommand
-import com.github.eltonvs.obd.command.fuel.FuelConsumptionRateCommand
-import com.github.eltonvs.obd.command.fuel.FuelLevelCommand
-import com.github.eltonvs.obd.command.temperature.EngineCoolantTemperatureCommand
-import com.github.eltonvs.obd.command.temperature.OilTemperatureCommand
-import kotlinx.coroutines.delay
+import com.github.pires.obd.*
+import com.github.pires.obd.commands.SpeedCommand
+import com.github.pires.obd.commands.engine.LoadCommand
+import com.github.pires.obd.commands.engine.OilTempCommand
+import com.github.pires.obd.commands.engine.RPMCommand
+import com.github.pires.obd.commands.engine.ThrottlePositionCommand
+import com.github.pires.obd.commands.fuel.ConsumptionRateCommand
+import com.github.pires.obd.commands.fuel.FuelLevelCommand
+import com.github.pires.obd.commands.protocol.EchoOffCommand
+import com.github.pires.obd.commands.protocol.LineFeedOffCommand
+import com.github.pires.obd.commands.protocol.SelectProtocolCommand
+import com.github.pires.obd.commands.protocol.TimeoutCommand
+import com.github.pires.obd.commands.temperature.AmbientAirTemperatureCommand
+import com.github.pires.obd.commands.temperature.EngineCoolantTemperatureCommand
+import com.google.android.material.bottomnavigation.BottomNavigationView
 import java.io.*
+import java.lang.reflect.Method
+import java.time.LocalDate
+import java.time.LocalDateTime
 import java.util.*
-import kotlin.collections.ArrayList
+import com.example.obd2pti.Datos
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import java.lang.Boolean.TRUE
+import java.lang.Thread.sleep
+
 
 const val REQUEST_ENABLE_BT = 1;
 val bluetoothAdapter: BluetoothAdapter? = BluetoothAdapter.getDefaultAdapter()
@@ -61,19 +67,13 @@ private const val LOCATION_PERMISSION_REQUEST_CODE = 2
     val PairedDevices:MutableMap<String,BluetoothDevice> = mutableMapOf<String, BluetoothDevice>()
     val DiscoveredDevices:MutableMap<String,BluetoothDevice> = mutableMapOf<String, BluetoothDevice>()
     private val DiscoveredDevicesNames = ArrayList<String>()
-    //abstract var inputStream:InputStream
+     private val MY_UUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB")
+
+     //abstract var inputStream:InputStream
    // abstract var outputStream:OutputStream
     var connected = false
     var recolección = false
-     //Datos OBD2
-        var speed = "0"
-        var rpm = "0"
-        var coolantTemp = "0"
-        var oilTemp = "0"
-        var throttlePos = "0"
-        var engineLoad = "0"
-        var fuelLevel = "0"
-        var fuelConsumption = "0"
+
 
 
 
@@ -159,7 +159,7 @@ private const val LOCATION_PERMISSION_REQUEST_CODE = 2
 
     override fun onDestroy() {
         super.onDestroy()
-
+        stopDiscovery()
         // Don't forget to unregister the ACTION_FOUND receiver.
         unregisterReceiver(receiver)
     }
@@ -183,15 +183,8 @@ private const val LOCATION_PERMISSION_REQUEST_CODE = 2
         setupActionBarWithNavController(navController, appBarConfiguration)
         navView.setupWithNavController(navController)
         val path = filesDir
-
-        testjson(path)
-        /*val dashboardPanel = LayoutInflater.from(this).inflate(R.layout.fragment_dashboard, null)
-        val arrayTest = ArrayList<String>()
-        arrayTest.add("Hola")
-        arrayTest.add("Adios")
-        val DevicesListView = dashboardPanel.findViewById<ListView>(R.id.listView)
-        val listAdapter : ArrayAdapter<String> = ArrayAdapter(this, android.R.layout.simple_list_item_1, arrayTest)
-        DevicesListView.adapter = listAdapter */
+        startDiscovery()
+        //testjson(path)
 
 
     }
@@ -246,7 +239,6 @@ private const val LOCATION_PERMISSION_REQUEST_CODE = 2
             }
 
             val pairedDevices: Set<BluetoothDevice>? = bluetoothAdapter?.bondedDevices
-            Toast.makeText(this@MainActivity, "Entrando de obtener paired devices", Toast.LENGTH_SHORT).show()
 
             pairedDevices?.forEach { device ->
                 val deviceName = device.name
@@ -255,12 +247,7 @@ private const val LOCATION_PERMISSION_REQUEST_CODE = 2
                 PairedDevices[deviceName] = device
                 DevicesNames.add(deviceName)
             }
-            Toast.makeText(this@MainActivity, "Saliendo de obtener paired devices", Toast.LENGTH_SHORT).show()
-           /* val dashboardPanel = LayoutInflater.from(this).inflate(R.layout.fragment_dashboard, null)
 
-            val DevicesListView = dashboardPanel.findViewById<ListView>(R.id.listView)
-            val listAdapter : ArrayAdapter<String> = ArrayAdapter(this, android.R.layout.simple_list_item_1, DevicesNames)
-            DevicesListView.adapter = listAdapter */
             return DevicesNames
         }
 
@@ -376,9 +363,11 @@ private const val LOCATION_PERMISSION_REQUEST_CODE = 2
          return
         }
 
+        @RequiresApi(Build.VERSION_CODES.O)
         public fun connectToBLDevice(device_name:String): Int {
             val device:BluetoothDevice
             connected = false
+            stopDiscovery()
             if (PairedDevices.containsKey(device_name)) {
                 device = PairedDevices[device_name]!!
             }
@@ -435,72 +424,198 @@ private const val LOCATION_PERMISSION_REQUEST_CODE = 2
             }
             val filter = IntentFilter(BluetoothDevice.ACTION_FOUND)
             registerReceiver(receiver, filter)
+            Toast.makeText(this, "Conectando a ${device.name}", Toast.LENGTH_SHORT).show()
+
+            var sock: BluetoothSocket? = null
+            var sockFallback: BluetoothSocket? = null
+
+            Log.d(TAG, "Starting Bluetooth connection..")
+            try {
+                sock = device.createRfcommSocketToServiceRecord(MY_UUID)
+                sock.connect()
+                connected = true
+                obd2Connection(filesDir, sock)
+                return 1
+            } catch (e1: Exception) {
+                Log.e(
+                    TAG,
+                    "There was an error while establishing Bluetooth connection. Falling back..",
+                    e1
+                )
+                val clazz: Class<*> = sock!!.remoteDevice.javaClass
+                val paramTypes = arrayOf<Class<*>>(Integer.TYPE)
+                try {
+                    val m: Method = clazz.getMethod("createRfcommSocket", *paramTypes)
+                    val params = arrayOf<Any>(Integer.valueOf(1))
+                    sockFallback = m.invoke(sock!!.remoteDevice, params) as BluetoothSocket?
+                    sockFallback!!.connect()
+                    sock = sockFallback
+                } catch (e2: Exception) {
+                    Log.e(TAG, "Couldn't fallback while establishing Bluetooth connection.", e2)
+                    throw IOException(e2.message)
+                }
+            }
 
 
-            //Connect to OBD2 bluetooth device
-            val uuid = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB")
-            val socket = device.createRfcommSocketToServiceRecord(uuid)
-            socket.connect()
-            val inputStream = socket.inputStream
-            val outputStream = socket.outputStream
-            connected = true
-            return 1
+              /*  val uuid = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB")
+                val socket = device.createInsecureRfcommSocketToServiceRecord(uuid)
+                //Connect to socket, catch exceptions
+                try {
+                    socket.connect()
+                } catch (e: IOException) {
+                    e.printStackTrace()
+                    return 0
+                }
+
+
+                val inputStream = socket.inputStream
+                val outputStream = socket.outputStream
+                connected = true
+                obd2Connection(filesDir, outputStream, inputStream) */
+                return 0
+
         }
 
-        suspend fun ob2Connection(path: File, outputStream: OutputStream, inputStream: InputStream) {
+
+
+         @RequiresApi(Build.VERSION_CODES.O)
+         fun obd2Connection(path: File, socket: BluetoothSocket) {
             if (!connected) {
                 Toast.makeText(this@MainActivity, "No hay conexión", Toast.LENGTH_SHORT).show()
                 return
             }
 
-            val letDirectory = File(path, "LET")
+            val letDirectory = File(path, "EXPORTS")
             if (!letDirectory.exists()) {
                 letDirectory.mkdir()
             }
-            val file = File(letDirectory, "export.json")
+             //Get a string with the current date
+            val today = LocalDate.now().toString()
+            val file = File(letDirectory, "${today}.json")
             if (!file.exists()) {
                 file.createNewFile()
             }
+             //delete file content
+            file.writeText("")
             val fileWriter = FileWriter(file, true)
             val jsonWriter = JsonWriter(fileWriter)
 
-            recolección = true
-            val obdConnection = ObdDeviceConnection(inputStream, outputStream)
-            //Lanzamos una petición de datos repetidamente cada medio segundo
-            while (true and !recolección) {
-                delay(500)
-                var response = obdConnection.run(SpeedCommand());
-                speed = response.value
-                response = obdConnection.run(RPMCommand());
-                rpm = response.value
-                response = obdConnection.run(LoadCommand());
-                engineLoad = response.value
-                response = obdConnection.run(ThrottlePositionCommand());
-                throttlePos = response.value
-                response = obdConnection.run(EngineCoolantTemperatureCommand())
-                coolantTemp = response.value
-                response = obdConnection.run(OilTemperatureCommand())
-                oilTemp = response.value
-                response = obdConnection.run(FuelLevelCommand());
-                fuelLevel = response.value
-                response = obdConnection.run(FuelConsumptionRateCommand());
-                fuelConsumption = response.value
+             val listaDatos: MutableList<Datos> = mutableListOf()
 
-                jsonWriter.beginObject()
-                jsonWriter.name("speed").value(speed)
-                jsonWriter.name("rpm").value(rpm)
-                jsonWriter.name("throttle").value(throttlePos)
-                jsonWriter.name("engineLoad").value(engineLoad)
-                jsonWriter.name("engineCoolantTemp").value(coolantTemp)
-                jsonWriter.name("oilTemp").value(oilTemp)
-                jsonWriter.name("fuelLevel").value(fuelLevel)
-                jsonWriter.name("fuelConsumption").value(fuelConsumption)
-                jsonWriter.endObject()
-
-            }
+             try {
+                 EchoOffCommand().run(socket.inputStream, socket.outputStream)
+                 LineFeedOffCommand().run(socket.inputStream, socket.outputStream)
+                 TimeoutCommand(500).run(socket.inputStream, socket.outputStream)
+                 SelectProtocolCommand(com.github.pires.obd.enums.ObdProtocols.AUTO).run(socket.inputStream, socket.outputStream)
+                 AmbientAirTemperatureCommand().run(
+                     socket.inputStream,
+                     socket.outputStream
+                 )
+                 recolección = true
 
 
+
+             } catch (e: java.lang.Exception) {
+                 // handle errors
+             }
+             var speedcomm:SpeedCommand = SpeedCommand()
+             var rpmcomm:RPMCommand = RPMCommand()
+             var throttlecomm:ThrottlePositionCommand = ThrottlePositionCommand()
+             var engineloadcomm:LoadCommand = LoadCommand()
+             var coolanttempcomm:EngineCoolantTemperatureCommand = EngineCoolantTemperatureCommand()
+             var oiltempcomm:OilTempCommand = OilTempCommand()
+             var fuellevelcomm:FuelLevelCommand = FuelLevelCommand()
+             var fuelconsumptioncomm: ConsumptionRateCommand = ConsumptionRateCommand()
+
+             var datos0 = Datos()
+             rpmcomm.run(socket.inputStream, socket.outputStream)
+             speedcomm.run(socket.inputStream, socket.outputStream)
+             val current0 = LocalDateTime.now()
+
+             datos0.currentTime = current0.toString()
+             datos0.speed = speedcomm.metricSpeed
+             datos0.rpm = rpmcomm.rpm
+             listaDatos.add(datos0)
+
+             var queryNum = 0
+             recolección = true
+             val asyncTask = GlobalScope.launch(Dispatchers.IO) {
+                    while (recolección) {
+                        // Toast.makeText(this, "Query: $queryNum", Toast.LENGTH_SHORT).show()
+                        var datos = Datos()
+                        rpmcomm.run(socket.inputStream, socket.outputStream)
+                        speedcomm.run(socket.inputStream, socket.outputStream)
+                        //throttlecomm.run(socket.inputStream, socket.outputStream)
+                        //engineloadcomm.run(socket.inputStream, socket.outputStream)
+                        //coolanttempcomm.run(socket.inputStream, socket.outputStream)
+                        //oiltempcomm.run(socket.inputStream, socket.outputStream)
+                        //fuellevelcomm.run(socket.inputStream, socket.outputStream)
+                        //fuelconsumptioncomm.run(socket.inputStream, socket.outputStream)
+                        val current = LocalDateTime.now()
+
+                        datos.currentTime = current.toString()
+                        datos.speed = speedcomm.metricSpeed
+                        datos.rpm = rpmcomm.rpm
+                        //   datos.throttle = throttlecomm.throttlePosition
+                        //   datos.engineload = engineloadcomm.load
+                        //   datos.coolanttemp = coolanttempcomm.temperature
+                        //   datos.oiltemp = oiltempcomm.temperature
+                        //   datos.fuellevel = fuellevelcomm.fuelLevel
+                        //   datos.fuelconsumption = fuelconsumptioncomm.fuelConsumptionRate
+                        listaDatos.add(datos)
+                        queryNum++
+                    }
+             }
+                asyncTask.join()
+
+             while (recolección) {
+                // Toast.makeText(this, "Query: $queryNum", Toast.LENGTH_SHORT).show()
+                 var datos = Datos()
+                 rpmcomm.run(socket.inputStream, socket.outputStream)
+                 speedcomm.run(socket.inputStream, socket.outputStream)
+                 //throttlecomm.run(socket.inputStream, socket.outputStream)
+                 //engineloadcomm.run(socket.inputStream, socket.outputStream)
+                 //coolanttempcomm.run(socket.inputStream, socket.outputStream)
+                 //oiltempcomm.run(socket.inputStream, socket.outputStream)
+                 //fuellevelcomm.run(socket.inputStream, socket.outputStream)
+                 //fuelconsumptioncomm.run(socket.inputStream, socket.outputStream)
+                 val current = LocalDateTime.now()
+
+                 datos.currentTime = current.toString()
+                 datos.speed = speedcomm.metricSpeed
+                 datos.rpm = rpmcomm.rpm
+                 //   datos.throttlePosition = throttlecomm.percentage
+                 //  datos.engineLoad = engineloadcomm.percentage
+                 // datos.coolantTemp = coolanttempcomm.temperature
+                 // datos.oilTemp = oiltempcomm.temperature
+                 // datos.fuelLevel = fuellevelcomm.fuelLevel
+                 // datos.fuelConsumption = fuelconsumptioncomm.litersPerHour
+                 listaDatos.add(datos)
+                 ++queryNum
+                 Thread.sleep(250)
+             }
+             jsonWriter.beginArray()
+             listaDatos.forEach() {
+                 jsonWriter.beginObject()
+                 jsonWriter.name("time").value(it.currentTime)
+                 jsonWriter.name("speed").value(it.speed)
+                 jsonWriter.name("rpm").value(it.rpm)
+                 jsonWriter.name("throttle").value(it.throttlePosition)
+                 jsonWriter.name("engine_load").value(it.engineLoad)
+                 jsonWriter.name("engine_coolant_temp").value(it.coolantTemp)
+                 jsonWriter.name("oil_temp").value(it.oilTemp)
+                 jsonWriter.name("fuel_level").value(it.fuelLevel)
+                 jsonWriter.name("fuel_consumption").value(it.fuelConsumption)
+                 jsonWriter.endObject()
+             }
+             jsonWriter.endArray()
+             jsonWriter.close()
+            fileWriter.close()
+            return
         }
+
+        fun asyncRecolect()
+
         fun testjson(path:File) {
             val letDirectory = File(path, "LET")
             if (!letDirectory.exists()) {
