@@ -45,7 +45,7 @@ class HomeFragment : Fragment() {
 
         val textViewRecoleccion: TextView = binding.textRecoleccion
         homeViewModel.text.observe(viewLifecycleOwner) {
-            if (mainAct.recolección) {
+            if (mainAct.thread.recoleccion) {
                 textViewRecoleccion.text = "Recolección: ON"
                 textViewRecoleccion.setTextColor(Color.GREEN)
             } else {
@@ -55,12 +55,12 @@ class HomeFragment : Fragment() {
         }
 
         binding.recoleccionButton.setOnClickListener {
-            if (mainAct.recolección) {
-                mainAct.recolección = false
+            if (mainAct.thread.recoleccion) {
+                mainAct.thread.recoleccion = false
                 textViewRecoleccion.text = "Recolección: OFF"
                 textViewRecoleccion.setTextColor(Color.RED)
             } else {
-                mainAct.recolección = true
+                mainAct.thread.recoleccion = true
                 textViewRecoleccion.text = "Recolección: ON"
                 textViewRecoleccion.setTextColor(Color.GREEN)
             }

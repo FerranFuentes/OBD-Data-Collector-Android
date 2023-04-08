@@ -63,7 +63,9 @@ private const val LOCATION_PERMISSION_REQUEST_CODE = 2
 
 
  class MainActivity : AppCompatActivity() {
-    private val DevicesNames = ArrayList<String>()
+     val thread = OBD2Recoletion()
+     var recoleccion: Boolean = false
+     private val DevicesNames = ArrayList<String>()
     val PairedDevices:MutableMap<String,BluetoothDevice> = mutableMapOf<String, BluetoothDevice>()
     val DiscoveredDevices:MutableMap<String,BluetoothDevice> = mutableMapOf<String, BluetoothDevice>()
     private val DiscoveredDevicesNames = ArrayList<String>()
@@ -72,7 +74,7 @@ private const val LOCATION_PERMISSION_REQUEST_CODE = 2
      //abstract var inputStream:InputStream
    // abstract var outputStream:OutputStream
     var connected = false
-    var recolección = false
+    var recolection = false
 
 
 
@@ -495,8 +497,11 @@ private const val LOCATION_PERMISSION_REQUEST_CODE = 2
             if (!file.exists()) {
                 file.createNewFile()
             }
+             thread.socket = socket
+             thread.path = filesDir
+             thread.start()
              //delete file content
-            file.writeText("")
+          /*  file.writeText("")
             val fileWriter = FileWriter(file, true)
             val jsonWriter = JsonWriter(fileWriter)
 
@@ -539,35 +544,6 @@ private const val LOCATION_PERMISSION_REQUEST_CODE = 2
 
              var queryNum = 0
              recolección = true
-             val asyncTask = GlobalScope.launch(Dispatchers.IO) {
-                    while (recolección) {
-                        // Toast.makeText(this, "Query: $queryNum", Toast.LENGTH_SHORT).show()
-                        var datos = Datos()
-                        rpmcomm.run(socket.inputStream, socket.outputStream)
-                        speedcomm.run(socket.inputStream, socket.outputStream)
-                        //throttlecomm.run(socket.inputStream, socket.outputStream)
-                        //engineloadcomm.run(socket.inputStream, socket.outputStream)
-                        //coolanttempcomm.run(socket.inputStream, socket.outputStream)
-                        //oiltempcomm.run(socket.inputStream, socket.outputStream)
-                        //fuellevelcomm.run(socket.inputStream, socket.outputStream)
-                        //fuelconsumptioncomm.run(socket.inputStream, socket.outputStream)
-                        val current = LocalDateTime.now()
-
-                        datos.currentTime = current.toString()
-                        datos.speed = speedcomm.metricSpeed
-                        datos.rpm = rpmcomm.rpm
-                        //   datos.throttle = throttlecomm.throttlePosition
-                        //   datos.engineload = engineloadcomm.load
-                        //   datos.coolanttemp = coolanttempcomm.temperature
-                        //   datos.oiltemp = oiltempcomm.temperature
-                        //   datos.fuellevel = fuellevelcomm.fuelLevel
-                        //   datos.fuelconsumption = fuelconsumptioncomm.fuelConsumptionRate
-                        listaDatos.add(datos)
-                        queryNum++
-                    }
-             }
-                asyncTask.join()
-
              while (recolección) {
                 // Toast.makeText(this, "Query: $queryNum", Toast.LENGTH_SHORT).show()
                  var datos = Datos()
@@ -614,7 +590,7 @@ private const val LOCATION_PERMISSION_REQUEST_CODE = 2
             return
         }
 
-        fun asyncRecolect()
+
 
         fun testjson(path:File) {
             val letDirectory = File(path, "LET")
@@ -636,8 +612,12 @@ private const val LOCATION_PERMISSION_REQUEST_CODE = 2
             jsonWriter.name("fuelLevel").value(0.5)
             jsonWriter.endObject()
             jsonWriter.close()
-            fileWriter.close()
+            fileWriter.close() */
             return
         }
 
-    }
+     companion object {
+     }
+
+
+ }
