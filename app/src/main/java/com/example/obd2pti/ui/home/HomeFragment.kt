@@ -66,6 +66,10 @@ class HomeFragment : Fragment() {
             }
         }
 
+        binding.uploadButton.setOnClickListener {
+            mainAct.uploadData()
+        }
+
         return root
     }
 

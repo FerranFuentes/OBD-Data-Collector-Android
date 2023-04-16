@@ -1,17 +1,11 @@
 package com.example.obd2pti
-import com.example.obd2pti.Datos
-import com.example.obd2pti.MainActivity
-import androidx.fragment.app.Fragment
-import android.bluetooth.BluetoothAdapter
-import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothSocket
-import android.content.Context
 import android.os.Build
 import android.util.JsonWriter
-import android.widget.Toast
 import androidx.annotation.RequiresApi
 import com.github.pires.obd.*
 import com.github.pires.obd.commands.SpeedCommand
+import com.github.pires.obd.commands.control.TroubleCodesCommand
 import com.github.pires.obd.commands.engine.LoadCommand
 import com.github.pires.obd.commands.engine.OilTempCommand
 import com.github.pires.obd.commands.engine.RPMCommand
@@ -38,6 +32,15 @@ class OBD2Recoletion(): Thread() {
 
     @RequiresApi(Build.VERSION_CODES.O)
     override fun run() {
+        var matricula : String
+        val matriculaFile = File(path, "matricula.txt")
+       try {
+              matricula = matriculaFile.readText()
+         } catch (e:Exception) {
+              matriculaFile.createNewFile()
+              matriculaFile.writeText("matricula")
+              matricula = matriculaFile.readText()
+       }
         val letDirectory = File(path, "EXPORTS")
         if (!letDirectory.exists()) {
             letDirectory.mkdir()
@@ -79,6 +82,7 @@ class OBD2Recoletion(): Thread() {
         var oiltempcomm:OilTempCommand = OilTempCommand()
         var fuellevelcomm:FuelLevelCommand = FuelLevelCommand()
         var fuelconsumptioncomm: ConsumptionRateCommand = ConsumptionRateCommand()
+        var troublecodescomm: TroubleCodesCommand = TroubleCodesCommand()
 
         var datos0 = Datos()
         rpmcomm.run(socket.inputStream, socket.outputStream)
@@ -95,25 +99,63 @@ class OBD2Recoletion(): Thread() {
         while (recoleccion) {
             // Toast.makeText(this, "Query: $queryNum", Toast.LENGTH_SHORT).show()
             var datos = Datos()
-            rpmcomm.run(socket.inputStream, socket.outputStream)
-            speedcomm.run(socket.inputStream, socket.outputStream)
-            //throttlecomm.run(socket.inputStream, socket.outputStream)
-            //engineloadcomm.run(socket.inputStream, socket.outputStream)
-            //coolanttempcomm.run(socket.inputStream, socket.outputStream)
-            //oiltempcomm.run(socket.inputStream, socket.outputStream)
-            //fuellevelcomm.run(socket.inputStream, socket.outputStream)
-            //fuelconsumptioncomm.run(socket.inputStream, socket.outputStream)
+           try {
+               rpmcomm.run(socket.inputStream, socket.outputStream)
+           } catch (e: Exception) {
+              // println("Error al leer RPM");
+              }
+            try {
+                speedcomm.run(socket.inputStream, socket.outputStream)
+            } catch (e: Exception) {
+                //println("Error al leer velocidad");
+            }
+            try {
+                throttlecomm.run(socket.inputStream, socket.outputStream)
+            } catch (e: Exception) {
+                //println("Error al leer throttle");
+            }
+            try {
+                engineloadcomm.run(socket.inputStream, socket.outputStream)
+            } catch (e: Exception) {
+                //println("Error al leer engine load");
+            }
+            try {
+                coolanttempcomm.run(socket.inputStream, socket.outputStream)
+            } catch (e: Exception) {
+                //println("Error al leer coolant temp");
+            }
+            try {
+                oiltempcomm.run(socket.inputStream, socket.outputStream)
+            } catch (e: Exception) {
+                //println("Error al leer oil temp");
+            }
+            try {
+                fuellevelcomm.run(socket.inputStream, socket.outputStream)
+            } catch (e: Exception) {
+                //println("Error al leer fuel level");
+            }
+            try {
+                fuelconsumptioncomm.run(socket.inputStream, socket.outputStream)
+            } catch (e: Exception) {
+                //println("Error al leer fuel consumption");
+            }
+            try {
+                troublecodescomm.run(socket.inputStream, socket.outputStream)
+            } catch (e: Exception) {
+                //println("Error al leer trouble codes");
+            }
             val current = LocalDateTime.now()
-
+            datos.matricula = matricula
             datos.currentTime = current.toString()
             datos.speed = speedcomm.metricSpeed
             datos.rpm = rpmcomm.rpm
-            //   datos.throttlePosition = throttlecomm.percentage
-            //  datos.engineLoad = engineloadcomm.percentage
-            // datos.coolantTemp = coolanttempcomm.temperature
-            // datos.oilTemp = oiltempcomm.temperature
-            // datos.fuelLevel = fuellevelcomm.fuelLevel
-            // datos.fuelConsumption = fuelconsumptioncomm.litersPerHour
+            datos.throttlePosition = throttlecomm.percentage
+            datos.engineLoad = engineloadcomm.percentage
+            datos.coolantTemp = coolanttempcomm.temperature
+            datos.oilTemp = oiltempcomm.temperature
+            datos.fuelLevel = fuellevelcomm.fuelLevel
+            datos.fuelConsumption = fuelconsumptioncomm.litersPerHour
+            datos.troubleCodes = troublecodescomm.formattedResult
             listaDatos.add(datos)
             ++queryNum
             Thread.sleep(250)
@@ -121,7 +163,9 @@ class OBD2Recoletion(): Thread() {
         jsonWriter.beginArray()
         listaDatos.forEach() {
             jsonWriter.beginObject()
+            jsonWriter.name("matricula").value(it.matricula)
             jsonWriter.name("time").value(it.currentTime)
+            jsonWriter.name("trouble_codes").value(it.troubleCodes)
             jsonWriter.name("speed").value(it.speed)
             jsonWriter.name("rpm").value(it.rpm)
             jsonWriter.name("throttle").value(it.throttlePosition)

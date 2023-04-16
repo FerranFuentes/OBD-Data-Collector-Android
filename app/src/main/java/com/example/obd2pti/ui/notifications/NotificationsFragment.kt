@@ -10,7 +10,9 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
+import com.example.obd2pti.MainActivity
 import com.example.obd2pti.databinding.FragmentNotificationsBinding
+import java.io.File
 import java.math.BigInteger
 import java.security.MessageDigest
 
@@ -54,7 +56,16 @@ class NotificationsFragment : Fragment() {
             Toast.makeText(context, "Matricula: $matricula, Usuario: $usuario, Password: $password", Toast.LENGTH_SHORT).show()
             var md = MessageDigest.getInstance("SHA-256")
             val passwordHash = BigInteger(1, md.digest(password.toByteArray())).toString(16).padStart(32, '0')
-            Toast.makeText(context, "Password Hash: $passwordHash", Toast.LENGTH_SHORT).show()
+            //Get path to app direcotry
+            var mainAct = activity as MainActivity
+            val path = mainAct.workingPath
+            val file = File(path, "matricula.txt")
+            if (!file.exists()) {
+                file.createNewFile()
+            }
+            //Write text to file
+            file.writeText("");
+            file.writeText(matricula)
         }
 
         return root

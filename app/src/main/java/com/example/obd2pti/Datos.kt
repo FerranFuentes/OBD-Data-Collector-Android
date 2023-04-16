@@ -1,7 +1,9 @@
 package com.example.obd2pti
 
 class Datos {
+   var matricula : String = ""
    var currentTime : String = ""
+   var troubleCodes : String = ""
    var speed: Int = 0
    var rpm: Int = 0
    var throttlePosition : Float = 0.0f
@@ -11,8 +13,11 @@ class Datos {
    var fuelLevel: Float = 0.0f
    var fuelConsumption : Float = 0.0f
 
+
    public fun reset(){
+       matricula = ""
        currentTime = ""
+       troubleCodes = ""
        speed = 0
        rpm = 0
        throttlePosition = 0.0f
@@ -21,6 +26,7 @@ class Datos {
        oilTemp = 0.0f
        fuelLevel = 0.0f
        fuelConsumption = 0.0f
+
    }
 
 }

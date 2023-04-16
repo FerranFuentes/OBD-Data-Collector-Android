@@ -10,8 +10,6 @@ import android.content.*
 import android.content.ContentValues.TAG
 import android.content.pm.PackageManager
 import android.os.*
-import android.system.Os.socket
-import android.util.JsonWriter
 import android.util.Log
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
@@ -24,34 +22,14 @@ import androidx.navigation.ui.AppBarConfiguration
 import androidx.navigation.ui.setupActionBarWithNavController
 import androidx.navigation.ui.setupWithNavController
 import com.example.obd2pti.databinding.ActivityMainBinding
+import com.github.kittinunf.fuel.httpGet
+import com.github.kittinunf.result.*
 import com.github.pires.obd.*
-import com.github.pires.obd.commands.SpeedCommand
-import com.github.pires.obd.commands.engine.LoadCommand
-import com.github.pires.obd.commands.engine.OilTempCommand
-import com.github.pires.obd.commands.engine.RPMCommand
-import com.github.pires.obd.commands.engine.ThrottlePositionCommand
-import com.github.pires.obd.commands.fuel.ConsumptionRateCommand
-import com.github.pires.obd.commands.fuel.FuelLevelCommand
-import com.github.pires.obd.commands.protocol.EchoOffCommand
-import com.github.pires.obd.commands.protocol.LineFeedOffCommand
-import com.github.pires.obd.commands.protocol.SelectProtocolCommand
-import com.github.pires.obd.commands.protocol.TimeoutCommand
-import com.github.pires.obd.commands.temperature.AmbientAirTemperatureCommand
-import com.github.pires.obd.commands.temperature.EngineCoolantTemperatureCommand
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import java.io.*
 import java.lang.reflect.Method
 import java.time.LocalDate
-import java.time.LocalDateTime
 import java.util.*
-import com.example.obd2pti.Datos
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
-import java.lang.Boolean.TRUE
-import java.lang.Thread.sleep
-
 
 const val REQUEST_ENABLE_BT = 1;
 val bluetoothAdapter: BluetoothAdapter? = BluetoothAdapter.getDefaultAdapter()
@@ -70,6 +48,8 @@ private const val LOCATION_PERMISSION_REQUEST_CODE = 2
     val DiscoveredDevices:MutableMap<String,BluetoothDevice> = mutableMapOf<String, BluetoothDevice>()
     private val DiscoveredDevicesNames = ArrayList<String>()
      private val MY_UUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB")
+     var workingPath:File = File("")
+
 
      //abstract var inputStream:InputStream
    // abstract var outputStream:OutputStream
@@ -161,7 +141,11 @@ private const val LOCATION_PERMISSION_REQUEST_CODE = 2
 
     override fun onDestroy() {
         super.onDestroy()
-        stopDiscovery()
+       try {
+           stopDiscovery()
+       } finally {
+
+       }
         // Don't forget to unregister the ACTION_FOUND receiver.
         unregisterReceiver(receiver)
     }
@@ -184,7 +168,7 @@ private const val LOCATION_PERMISSION_REQUEST_CODE = 2
         )
         setupActionBarWithNavController(navController, appBarConfiguration)
         navView.setupWithNavController(navController)
-        val path = filesDir
+        workingPath = filesDir
         startDiscovery()
         //testjson(path)
 
@@ -436,7 +420,7 @@ private const val LOCATION_PERMISSION_REQUEST_CODE = 2
                 sock = device.createRfcommSocketToServiceRecord(MY_UUID)
                 sock.connect()
                 connected = true
-                obd2Connection(filesDir, sock)
+                obd2Connection(workingPath, sock)
                 return 1
             } catch (e1: Exception) {
                 Log.e(
@@ -498,7 +482,8 @@ private const val LOCATION_PERMISSION_REQUEST_CODE = 2
                 file.createNewFile()
             }
              thread.socket = socket
-             thread.path = filesDir
+             thread.path = workingPath
+
              thread.start()
              //delete file content
           /*  file.writeText("")
@@ -616,8 +601,28 @@ private const val LOCATION_PERMISSION_REQUEST_CODE = 2
             return
         }
 
-     companion object {
-     }
+     fun uploadData() {
+         val httpAsync = "https://httpbin.org/get"
+             .httpGet()
+             .responseString { request, response, result ->
+                 when (result) {
+                     is Result.Failure -> {
+                         val ex = result.getException()
+                         println(ex)
+                         Toast.makeText(this, "Error al subir datos", Toast.LENGTH_SHORT).show()
+                         Toast.makeText(this, ex.toString(), Toast.LENGTH_SHORT).show()
+                     }
+                     is Result.Success -> {
+                         val data = result.get()
+                         println(data)
+                        Toast.makeText(this, "Datos subidos", Toast.LENGTH_SHORT).show()
+                         Toast.makeText(this, data, Toast.LENGTH_SHORT).show()
+                     }
+                 }
+             }
 
+         httpAsync.join()
+
+     }
 
  }
