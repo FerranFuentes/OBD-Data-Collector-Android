@@ -6,7 +6,6 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
 import android.widget.EditText
-import android.widget.TextView
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
@@ -35,25 +34,18 @@ class NotificationsFragment : Fragment() {
         _binding = FragmentNotificationsBinding.inflate(inflater, container, false)
         val root: View = binding.root
 
-        val textView: TextView = binding.textNotifications
-        notificationsViewModel.text.observe(viewLifecycleOwner) {
-            textView.text = it
-        }
+
 
         val editTextMatricula: EditText = binding.editTextMatricula
-        val editTextUsuario: EditText = binding.editTextUsuario
         val editTextPassword: EditText = binding.editTextPassword
         val loginButton: Button = binding.loginbutton
 
         var matricula: String
-        var usuario: String
         var password: String
 
         loginButton.setOnClickListener{
             matricula = editTextMatricula.text.toString()
-            usuario = editTextUsuario.text.toString()
             password = editTextPassword.text.toString()
-            Toast.makeText(context, "Matricula: $matricula, Usuario: $usuario, Password: $password", Toast.LENGTH_SHORT).show()
             var md = MessageDigest.getInstance("SHA-256")
             val passwordHash = BigInteger(1, md.digest(password.toByteArray())).toString(16).padStart(32, '0')
             //Get path to app direcotry
@@ -66,6 +58,14 @@ class NotificationsFragment : Fragment() {
             //Write text to file
             file.writeText("");
             file.writeText(matricula)
+            val file2 = File(path, "password.txt")
+            if (!file2.exists()) {
+                file2.createNewFile()
+            }
+            //Write text to file
+            file2.writeText("");
+            file2.writeText(passwordHash)
+            Toast.makeText(context, "Login Successful", Toast.LENGTH_SHORT).show()
         }
 
         return root

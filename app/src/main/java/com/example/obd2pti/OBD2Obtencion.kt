@@ -33,6 +33,7 @@ class OBD2Recoletion(): Thread() {
     @RequiresApi(Build.VERSION_CODES.O)
     override fun run() {
         var matricula : String
+        var passwordHash: String
         val matriculaFile = File(path, "matricula.txt")
        try {
               matricula = matriculaFile.readText()
@@ -41,6 +42,14 @@ class OBD2Recoletion(): Thread() {
               matriculaFile.writeText("matricula")
               matricula = matriculaFile.readText()
        }
+        val hashFile = File(path, "password.txt")
+        try {
+            passwordHash = hashFile.readText()
+        } catch (e:Exception) {
+            hashFile.createNewFile()
+            hashFile.writeText("nullHash")
+            passwordHash = matriculaFile.readText()
+        }
         val letDirectory = File(path, "EXPORTS")
         if (!letDirectory.exists()) {
             letDirectory.mkdir()
@@ -52,9 +61,19 @@ class OBD2Recoletion(): Thread() {
             file.createNewFile()
         }
         //delete file content
-        file.writeText("")
+       // file.writeText("")
         val fileWriter = FileWriter(file, true)
         val jsonWriter = JsonWriter(fileWriter)
+        jsonWriter.setIndent("  ")
+        //check if file is empty
+        if (file.length() == 0L) {
+            jsonWriter.beginArray()
+            jsonWriter.beginObject()
+            jsonWriter.name("matricula").value(matricula)
+            jsonWriter.name("password").value(passwordHash)
+            jsonWriter.endObject()
+            jsonWriter.endArray()
+        }
 
         val listaDatos: MutableList<Datos> = mutableListOf()
 
@@ -163,7 +182,6 @@ class OBD2Recoletion(): Thread() {
         jsonWriter.beginArray()
         listaDatos.forEach() {
             jsonWriter.beginObject()
-            jsonWriter.name("matricula").value(it.matricula)
             jsonWriter.name("timestamp").value(it.currentTime)
             jsonWriter.name("trouble_codes").value(it.troubleCodes)
             jsonWriter.name("speed").value(it.speed)
