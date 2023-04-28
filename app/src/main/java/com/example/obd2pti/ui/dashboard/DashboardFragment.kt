@@ -37,25 +37,22 @@ class DashboardFragment : Fragment() {
         _binding = FragmentDashboardBinding.inflate(inflater, container, false)
         val root: View = binding.root
 
-        //Call getPairedDevices from MainActivity.kt
 
         val rootView = inflater.inflate(R.layout.fragment_dashboard, container, false)
         mainAct = activity as MainActivity
-        //val pairedBtn = rootView.findViewById<Button>(R.id.pairedbutton)
-        //val discoverBtn = rootView.findViewById<Button>(R.id.discoverbutton)
 
 
 
 
         binding.pairedbutton.setOnClickListener {
-            Toast.makeText(context, "Paired Devices", Toast.LENGTH_SHORT).show()
+            //Toast.makeText(context, "Paired Devices", Toast.LENGTH_SHORT).show()
             PairedDevicesNames = mainAct.getPairedDevices()
             val listAdapter = ArrayAdapter<String>(mainAct, android.R.layout.simple_list_item_1, PairedDevicesNames)
             binding.listView.adapter = listAdapter
         }
 
         binding.discoverbutton.setOnClickListener {
-            Toast.makeText(context, "Discover Devices", Toast.LENGTH_SHORT).show()
+            //Toast.makeText(context, "Discover Devices", Toast.LENGTH_SHORT).show()
             DiscoveredDevicesNames= mainAct.getDiscoveredDevices()
             val listAdapter = ArrayAdapter<String>(mainAct, android.R.layout.simple_list_item_1, DiscoveredDevicesNames)
             binding.listView.adapter = listAdapter
@@ -66,12 +63,12 @@ class DashboardFragment : Fragment() {
 
         binding.listView.onItemClickListener = AdapterView.OnItemClickListener { parent, view, position, id ->
             val item = parent.getItemAtPosition(position) as String
-            Toast.makeText(context, "Connecting to $item", Toast.LENGTH_SHORT).show()
+           // Toast.makeText(context, "Connecting to $item", Toast.LENGTH_SHORT).show()
             var connection_status = mainAct.connectToBLDevice(item)
             if (connection_status == 1) {
                 Toast.makeText(context, "Connected to $item", Toast.LENGTH_SHORT).show()
             } else {
-                Toast.makeText(context, "Failed to connect to $item", Toast.LENGTH_SHORT).show()
+                //Toast.makeText(context, "Failed to connect to $item", Toast.LENGTH_SHORT).show()
             }
         }
 

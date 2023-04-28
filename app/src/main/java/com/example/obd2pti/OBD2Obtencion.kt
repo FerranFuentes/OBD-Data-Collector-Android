@@ -139,7 +139,7 @@ class OBD2Recoletion(): Thread() {
             } catch (e: Exception) {
                 //println("Error al leer fuel consumption");
             }
-            try {
+            if (queryNum == 1 )try {
                 troublecodescomm.run(socket.inputStream, socket.outputStream)
             } catch (e: Exception) {
                 //println("Error al leer trouble codes");
@@ -158,13 +158,13 @@ class OBD2Recoletion(): Thread() {
             datos.troubleCodes = troublecodescomm.formattedResult
             listaDatos.add(datos)
             ++queryNum
-            Thread.sleep(250)
+            Thread.sleep(750)
         }
         jsonWriter.beginArray()
         listaDatos.forEach() {
             jsonWriter.beginObject()
             jsonWriter.name("matricula").value(it.matricula)
-            jsonWriter.name("time").value(it.currentTime)
+            jsonWriter.name("timestamp").value(it.currentTime)
             jsonWriter.name("trouble_codes").value(it.troubleCodes)
             jsonWriter.name("speed").value(it.speed)
             jsonWriter.name("rpm").value(it.rpm)

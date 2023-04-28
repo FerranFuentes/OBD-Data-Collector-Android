@@ -22,7 +22,7 @@ import androidx.navigation.ui.AppBarConfiguration
 import androidx.navigation.ui.setupActionBarWithNavController
 import androidx.navigation.ui.setupWithNavController
 import com.example.obd2pti.databinding.ActivityMainBinding
-import com.github.kittinunf.fuel.httpGet
+import com.github.kittinunf.fuel.httpPost
 import com.github.kittinunf.result.*
 import com.github.pires.obd.*
 import com.google.android.material.bottomnavigation.BottomNavigationView
@@ -438,7 +438,10 @@ private const val LOCATION_PERMISSION_REQUEST_CODE = 2
                     sock = sockFallback
                 } catch (e2: Exception) {
                     Log.e(TAG, "Couldn't fallback while establishing Bluetooth connection.", e2)
-                    throw IOException(e2.message)
+                    Toast.makeText(this, "No se pudo conectar a ${device.name}", Toast.LENGTH_SHORT).show()
+                    connected = false
+                    return 0
+                  //  throw IOException(e2.message)
                 }
             }
 
@@ -485,124 +488,11 @@ private const val LOCATION_PERMISSION_REQUEST_CODE = 2
              thread.path = workingPath
 
              thread.start()
-             //delete file content
-          /*  file.writeText("")
-            val fileWriter = FileWriter(file, true)
-            val jsonWriter = JsonWriter(fileWriter)
-
-             val listaDatos: MutableList<Datos> = mutableListOf()
-
-             try {
-                 EchoOffCommand().run(socket.inputStream, socket.outputStream)
-                 LineFeedOffCommand().run(socket.inputStream, socket.outputStream)
-                 TimeoutCommand(500).run(socket.inputStream, socket.outputStream)
-                 SelectProtocolCommand(com.github.pires.obd.enums.ObdProtocols.AUTO).run(socket.inputStream, socket.outputStream)
-                 AmbientAirTemperatureCommand().run(
-                     socket.inputStream,
-                     socket.outputStream
-                 )
-                 recolección = true
-
-
-
-             } catch (e: java.lang.Exception) {
-                 // handle errors
-             }
-             var speedcomm:SpeedCommand = SpeedCommand()
-             var rpmcomm:RPMCommand = RPMCommand()
-             var throttlecomm:ThrottlePositionCommand = ThrottlePositionCommand()
-             var engineloadcomm:LoadCommand = LoadCommand()
-             var coolanttempcomm:EngineCoolantTemperatureCommand = EngineCoolantTemperatureCommand()
-             var oiltempcomm:OilTempCommand = OilTempCommand()
-             var fuellevelcomm:FuelLevelCommand = FuelLevelCommand()
-             var fuelconsumptioncomm: ConsumptionRateCommand = ConsumptionRateCommand()
-
-             var datos0 = Datos()
-             rpmcomm.run(socket.inputStream, socket.outputStream)
-             speedcomm.run(socket.inputStream, socket.outputStream)
-             val current0 = LocalDateTime.now()
-
-             datos0.currentTime = current0.toString()
-             datos0.speed = speedcomm.metricSpeed
-             datos0.rpm = rpmcomm.rpm
-             listaDatos.add(datos0)
-
-             var queryNum = 0
-             recolección = true
-             while (recolección) {
-                // Toast.makeText(this, "Query: $queryNum", Toast.LENGTH_SHORT).show()
-                 var datos = Datos()
-                 rpmcomm.run(socket.inputStream, socket.outputStream)
-                 speedcomm.run(socket.inputStream, socket.outputStream)
-                 //throttlecomm.run(socket.inputStream, socket.outputStream)
-                 //engineloadcomm.run(socket.inputStream, socket.outputStream)
-                 //coolanttempcomm.run(socket.inputStream, socket.outputStream)
-                 //oiltempcomm.run(socket.inputStream, socket.outputStream)
-                 //fuellevelcomm.run(socket.inputStream, socket.outputStream)
-                 //fuelconsumptioncomm.run(socket.inputStream, socket.outputStream)
-                 val current = LocalDateTime.now()
-
-                 datos.currentTime = current.toString()
-                 datos.speed = speedcomm.metricSpeed
-                 datos.rpm = rpmcomm.rpm
-                 //   datos.throttlePosition = throttlecomm.percentage
-                 //  datos.engineLoad = engineloadcomm.percentage
-                 // datos.coolantTemp = coolanttempcomm.temperature
-                 // datos.oilTemp = oiltempcomm.temperature
-                 // datos.fuelLevel = fuellevelcomm.fuelLevel
-                 // datos.fuelConsumption = fuelconsumptioncomm.litersPerHour
-                 listaDatos.add(datos)
-                 ++queryNum
-                 Thread.sleep(250)
-             }
-             jsonWriter.beginArray()
-             listaDatos.forEach() {
-                 jsonWriter.beginObject()
-                 jsonWriter.name("time").value(it.currentTime)
-                 jsonWriter.name("speed").value(it.speed)
-                 jsonWriter.name("rpm").value(it.rpm)
-                 jsonWriter.name("throttle").value(it.throttlePosition)
-                 jsonWriter.name("engine_load").value(it.engineLoad)
-                 jsonWriter.name("engine_coolant_temp").value(it.coolantTemp)
-                 jsonWriter.name("oil_temp").value(it.oilTemp)
-                 jsonWriter.name("fuel_level").value(it.fuelLevel)
-                 jsonWriter.name("fuel_consumption").value(it.fuelConsumption)
-                 jsonWriter.endObject()
-             }
-             jsonWriter.endArray()
-             jsonWriter.close()
-            fileWriter.close()
-            return
-        }
-
-
-
-        fun testjson(path:File) {
-            val letDirectory = File(path, "LET")
-            if (!letDirectory.exists()) {
-                letDirectory.mkdir()
-            }
-            val file = File(letDirectory, "export.json")
-            if (!file.exists()) {
-                file.createNewFile()
-            }
-            val fileWriter = FileWriter(file, true)
-            val jsonWriter = JsonWriter(fileWriter)
-            jsonWriter.beginObject()
-            jsonWriter.name("speed").value(10)
-            jsonWriter.name("rpm").value(1000)
-            jsonWriter.name("throttle").value(0.5)
-            jsonWriter.name("engineLoad").value(0.5)
-            jsonWriter.name("engineCoolantTemp").value(100)
-            jsonWriter.name("fuelLevel").value(0.5)
-            jsonWriter.endObject()
-            jsonWriter.close()
-            fileWriter.close() */
             return
         }
 
      fun uploadData() {
-         val httpAsync = "https://httpbin.org/get"
+         /*val httpAsync = "https://httpbin.org/get"
              .httpGet()
              .responseString { request, response, result ->
                  when (result) {
@@ -619,9 +509,34 @@ private const val LOCATION_PERMISSION_REQUEST_CODE = 2
                          Toast.makeText(this, data, Toast.LENGTH_SHORT).show()
                      }
                  }
-             }
+             }*/
 
-         httpAsync.join()
+         //httpAsync.join()
+         val exportDirectory = File(workingPath, "EXPORTS")
+         exportDirectory.walk().forEach {
+             if (it.isFile) {
+                 val httpPostAsync = "https://httpbin.org/post"
+                     .httpPost()
+                     .body(it.readText())
+                     .responseString { request, response, result ->
+                         when (result) {
+                             is Result.Failure -> {
+                                 val ex = result.getException()
+                                 println(ex)
+                                 Toast.makeText(this, "Error al subir datos", Toast.LENGTH_SHORT).show()
+                                 Toast.makeText(this, ex.toString(), Toast.LENGTH_SHORT).show()
+                             }
+                             is Result.Success -> {
+                                 val data = result.get()
+                                 println(data)
+                                 Toast.makeText(this, "Datos subidos", Toast.LENGTH_SHORT).show()
+                                 Toast.makeText(this, data, Toast.LENGTH_SHORT).show()
+                             }
+                         }
+                     }
+                 httpPostAsync.join()
+             }
+         }
 
      }
 
