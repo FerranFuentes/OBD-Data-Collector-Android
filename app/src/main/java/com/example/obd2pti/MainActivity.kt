@@ -9,6 +9,7 @@ import android.bluetooth.le.*
 import android.content.*
 import android.content.ContentValues.TAG
 import android.content.pm.PackageManager
+import android.net.ConnectivityManager
 import android.os.*
 import android.util.Log
 import android.widget.Toast
@@ -49,6 +50,7 @@ private const val LOCATION_PERMISSION_REQUEST_CODE = 2
     private val DiscoveredDevicesNames = ArrayList<String>()
      private val MY_UUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB")
      var workingPath:File = File("")
+     var onlyWiFi = false
 
 
      //abstract var inputStream:InputStream
@@ -171,6 +173,18 @@ private const val LOCATION_PERMISSION_REQUEST_CODE = 2
         workingPath = filesDir
         startDiscovery()
         //testjson(path)
+
+        val wifiFile = File(workingPath, "wifi.txt")
+        try {
+            onlyWiFi = wifiFile.readText() == "true"
+        } catch (e:Exception) {
+            wifiFile.createNewFile()
+            if (onlyWiFi) {
+                wifiFile.writeText("true")
+            } else {
+                wifiFile.writeText("false")
+            }
+        }
 
 
     }
@@ -512,31 +526,77 @@ private const val LOCATION_PERMISSION_REQUEST_CODE = 2
              }*/
 
          //httpAsync.join()
+         //check if there is a wifi connection
+         val connectivityManager =
+             getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+         val activeNetworkInfo = connectivityManager.activeNetworkInfo
          val exportDirectory = File(workingPath, "EXPORTS")
-         exportDirectory.walk().forEach {
-             if (it.isFile) {
-                 val httpPostAsync = "https://httpbin.org/post"
-                     .httpPost()
-                     .body(it.readText())
-                     .responseString { request, response, result ->
-                         when (result) {
-                             is Result.Failure -> {
-                                 val ex = result.getException()
-                                 println(ex)
-                                 Toast.makeText(this, "Error al subir datos", Toast.LENGTH_SHORT).show()
-                                 Toast.makeText(this, ex.toString(), Toast.LENGTH_SHORT).show()
-                             }
-                             is Result.Success -> {
-                                 val data = result.get()
-                                 println(data)
-                                 Toast.makeText(this, "Datos subidos", Toast.LENGTH_SHORT).show()
-                                 Toast.makeText(this, data, Toast.LENGTH_SHORT).show()
+         if (onlyWiFi && activeNetworkInfo != null && activeNetworkInfo.type == ConnectivityManager.TYPE_WIFI) {
+             Toast.makeText(this, "Conectado a wifi", Toast.LENGTH_SHORT).show()
+             exportDirectory.walk().forEach {
+                 if (it.isFile) {
+                     val httpPostAsync = "https://httpbin.org/post"
+                         .httpPost()
+                         .body(it.readText())
+                         .responseString { request, response, result ->
+                             when (result) {
+                                 is Result.Failure -> {
+                                     val ex = result.getException()
+                                     println(ex)
+                                     Toast.makeText(
+                                         this,
+                                         "Error al subir datos",
+                                         Toast.LENGTH_SHORT
+                                     ).show()
+                                     Toast.makeText(this, ex.toString(), Toast.LENGTH_SHORT)
+                                         .show()
+                                 }
+
+                                 is Result.Success -> {
+                                     val data = result.get()
+                                     println(data)
+                                     Toast.makeText(this, "Datos subidos", Toast.LENGTH_SHORT)
+                                         .show()
+                                     Toast.makeText(this, data, Toast.LENGTH_SHORT).show()
+                                 }
                              }
                          }
-                     }
-                 httpPostAsync.join()
+                     httpPostAsync.join()
+                 }
              }
-         }
+         } else if (!onlyWiFi){
+                Toast.makeText(this, "No hay conexión a wifi", Toast.LENGTH_SHORT).show()
+             exportDirectory.walk().forEach {
+                 if (it.isFile) {
+                     val httpPostAsync = "https://httpbin.org/post"
+                         .httpPost()
+                         .body(it.readText())
+                         .responseString { request, response, result ->
+                             when (result) {
+                                 is Result.Failure -> {
+                                     val ex = result.getException()
+                                     println(ex)
+                                     Toast.makeText(
+                                         this,
+                                         "Error al subir datos",
+                                         Toast.LENGTH_SHORT
+                                     ).show()
+                                     Toast.makeText(this, ex.toString(), Toast.LENGTH_SHORT).show()
+                                 }
+
+                                 is Result.Success -> {
+                                     val data = result.get()
+                                     println(data)
+                                     Toast.makeText(this, "Datos subidos", Toast.LENGTH_SHORT)
+                                         .show()
+                                     Toast.makeText(this, data, Toast.LENGTH_SHORT).show()
+                                 }
+                             }
+                         }
+                     httpPostAsync.join()
+                 }
+             }
+     }
 
      }
 

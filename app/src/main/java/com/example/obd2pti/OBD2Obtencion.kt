@@ -67,12 +67,10 @@ class OBD2Recoletion(): Thread() {
         jsonWriter.setIndent("  ")
         //check if file is empty
         if (file.length() == 0L) {
-            jsonWriter.beginArray()
             jsonWriter.beginObject()
             jsonWriter.name("matricula").value(matricula)
             jsonWriter.name("password").value(passwordHash)
             jsonWriter.endObject()
-            jsonWriter.endArray()
         }
 
         val listaDatos: MutableList<Datos> = mutableListOf()
@@ -128,7 +126,7 @@ class OBD2Recoletion(): Thread() {
             } catch (e: Exception) {
                 //println("Error al leer velocidad");
             }
-            try {
+            try {jsonWriter.endObject()
                 throttlecomm.run(socket.inputStream, socket.outputStream)
             } catch (e: Exception) {
                 //println("Error al leer throttle");

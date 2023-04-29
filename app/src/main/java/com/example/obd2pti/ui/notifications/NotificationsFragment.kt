@@ -34,14 +34,26 @@ class NotificationsFragment : Fragment() {
         _binding = FragmentNotificationsBinding.inflate(inflater, container, false)
         val root: View = binding.root
 
-
+        var mainAct = activity as MainActivity
 
         val editTextMatricula: EditText = binding.editTextMatricula
         val editTextPassword: EditText = binding.editTextPassword
         val loginButton: Button = binding.loginbutton
+        val checkBoxWiFi = binding.checkBoxWifi
 
         var matricula: String
         var password: String
+
+
+        val wifiFile = File(mainAct.workingPath, "wifi.txt")
+        try {
+            checkBoxWiFi.isChecked = wifiFile.readText() == "true"
+        } catch (e:Exception) {
+            wifiFile.createNewFile()
+            checkBoxWiFi.isChecked = false
+        }
+
+
 
         loginButton.setOnClickListener{
             matricula = editTextMatricula.text.toString()
@@ -49,7 +61,7 @@ class NotificationsFragment : Fragment() {
             var md = MessageDigest.getInstance("SHA-256")
             val passwordHash = BigInteger(1, md.digest(password.toByteArray())).toString(16).padStart(32, '0')
             //Get path to app direcotry
-            var mainAct = activity as MainActivity
+
             val path = mainAct.workingPath
             val file = File(path, "matricula.txt")
             if (!file.exists()) {
@@ -66,6 +78,23 @@ class NotificationsFragment : Fragment() {
             file2.writeText("");
             file2.writeText(passwordHash)
             Toast.makeText(context, "Login Successful", Toast.LENGTH_SHORT).show()
+        }
+        checkBoxWiFi.setOnClickListener{
+            mainAct.onlyWiFi = checkBoxWiFi.isChecked
+            try {
+                if(checkBoxWiFi.isChecked) {
+                    wifiFile.writeText("true")
+                } else {
+                    wifiFile.writeText("false")
+                }
+            } catch (e:Exception) {
+                wifiFile.createNewFile()
+                if(checkBoxWiFi.isChecked) {
+                    wifiFile.writeText("true")
+                } else {
+                    wifiFile.writeText("false")
+                }
+            }
         }
 
         return root
