@@ -1,11 +1,13 @@
 package com.example.obd2pti.ui.home
 
 import android.graphics.Color
+import android.os.Build
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
+import androidx.annotation.RequiresApi
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import com.example.obd2pti.MainActivity
@@ -20,6 +22,7 @@ class HomeFragment : Fragment() {
     // onDestroyView.
     private val binding get() = _binding!!
 
+    @RequiresApi(Build.VERSION_CODES.O)
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -59,10 +62,6 @@ class HomeFragment : Fragment() {
                 mainAct.thread.recoleccion = false
                 textViewRecoleccion.text = "Recolección: OFF"
                 textViewRecoleccion.setTextColor(Color.RED)
-            } else {
-                mainAct.thread.recoleccion = true
-                textViewRecoleccion.text = "Recolección: ON"
-                textViewRecoleccion.setTextColor(Color.GREEN)
             }
         }
 

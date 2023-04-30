@@ -61,7 +61,6 @@ class OBD2Recoletion(): Thread() {
             tripFile.createNewFile()
             tripFile.writeText("0")
         }
-        ++trip
         //Get a string with the current date
         val time = LocalDateTime.now()
         val file = File(letDirectory, "${time}.json")
@@ -188,7 +187,7 @@ class OBD2Recoletion(): Thread() {
         val consumed_fuel = first_fuel - last_fuel
         jsonWriter.beginObject()
         jsonWriter.name("matricula").value(matricula)
-        jsonWriter.name("password").value(passwordHash)
+        jsonWriter.name("hash").value(passwordHash)
         jsonWriter.name("trip").value(trip)
         jsonWriter.name("km").value(km.toInt())
         jsonWriter.name("max_speed").value(velocidades.max())
@@ -214,6 +213,7 @@ class OBD2Recoletion(): Thread() {
         jsonWriter.endObject()
         jsonWriter.close()
         fileWriter.close()
+        ++trip
         tripFile.writeText(trip.toString())
         return
     }

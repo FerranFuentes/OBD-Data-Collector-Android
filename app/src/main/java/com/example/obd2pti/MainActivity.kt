@@ -458,23 +458,6 @@ private const val LOCATION_PERMISSION_REQUEST_CODE = 2
                   //  throw IOException(e2.message)
                 }
             }
-
-
-              /*  val uuid = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB")
-                val socket = device.createInsecureRfcommSocketToServiceRecord(uuid)
-                //Connect to socket, catch exceptions
-                try {
-                    socket.connect()
-                } catch (e: IOException) {
-                    e.printStackTrace()
-                    return 0
-                }
-
-
-                val inputStream = socket.inputStream
-                val outputStream = socket.outputStream
-                connected = true
-                obd2Connection(filesDir, outputStream, inputStream) */
                 return 0
 
         }

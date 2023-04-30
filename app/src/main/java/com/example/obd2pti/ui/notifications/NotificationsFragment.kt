@@ -61,7 +61,6 @@ class NotificationsFragment : Fragment() {
             var md = MessageDigest.getInstance("SHA-256")
             val passwordHash = BigInteger(1, md.digest(password.toByteArray())).toString(16).padStart(32, '0')
             //Get path to app direcotry
-
             val path = mainAct.workingPath
             val file = File(path, "matricula.txt")
             if (!file.exists()) {
