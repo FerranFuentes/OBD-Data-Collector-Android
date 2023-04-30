@@ -53,6 +53,15 @@ class OBD2Recoletion(): Thread() {
         if (!letDirectory.exists()) {
             letDirectory.mkdir()
         }
+        var trip:Int = 0
+        val tripFile = File(path, "trip.txt")
+        try {
+            trip = tripFile.readText().toInt()
+        } catch (e:Exception) {
+            tripFile.createNewFile()
+            tripFile.writeText("0")
+        }
+        ++trip
         //Get a string with the current date
         val time = LocalDateTime.now()
         val file = File(letDirectory, "${time}.json")
@@ -99,6 +108,8 @@ class OBD2Recoletion(): Thread() {
         var queryNum = 0
         var lastTime = System.currentTimeMillis()
         var firstTime = System.currentTimeMillis()
+        var first_fuel:Float = 0.0f
+        var last_fuel:Float = 0.0f
         recoleccion = true
         while (recoleccion) {
             // Toast.makeText(this, "Query: $queryNum", Toast.LENGTH_SHORT).show()
@@ -162,19 +173,26 @@ class OBD2Recoletion(): Thread() {
             datos.fuelConsumption = fuelconsumptioncomm.litersPerHour
             datos.troubleCodes = troublecodescomm.formattedResult
             listaDatos.add(datos)
+            if (queryNum == 1) {
+                first_fuel = datos.fuelLevel
+            }
            lastTime = System.currentTimeMillis()
+            last_fuel = datos.fuelLevel
             ++queryNum
             Thread.sleep(750)
         }
         val avgSpeed = velocidades.average();
         val duration = (lastTime - firstTime) / 1000
         val km = avgSpeed * (duration.toDouble() / 3600)
+        val consumed_fuel = first_fuel - last_fuel
         jsonWriter.beginObject()
         jsonWriter.name("matricula").value(matricula)
         jsonWriter.name("password").value(passwordHash)
-        jsonWriter.name("km").value(km)
+        jsonWriter.name("trip").value(trip)
+        jsonWriter.name("km").value(km.toInt())
         jsonWriter.name("max_speed").value(velocidades.max())
         jsonWriter.name("speed_average").value(avgSpeed)
+        jsonWriter.name("fuel_percentage").value(consumed_fuel)
         jsonWriter.name("duration").value(duration)
         jsonWriter.name("data").beginArray()
         listaDatos.forEach() {
@@ -195,6 +213,7 @@ class OBD2Recoletion(): Thread() {
         jsonWriter.endObject()
         jsonWriter.close()
         fileWriter.close()
+        tripFile.writeText(trip.toString())
         return
     }
 
