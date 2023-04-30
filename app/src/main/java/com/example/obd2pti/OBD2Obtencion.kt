@@ -110,6 +110,7 @@ class OBD2Recoletion(): Thread() {
         var firstTime = System.currentTimeMillis()
         var first_fuel:Float = 0.0f
         var last_fuel:Float = 0.0f
+        var troubleCodes:String = ""
         recoleccion = true
         while (recoleccion) {
             // Toast.makeText(this, "Query: $queryNum", Toast.LENGTH_SHORT).show()
@@ -171,10 +172,10 @@ class OBD2Recoletion(): Thread() {
             datos.oilTemp = oiltempcomm.temperature
             datos.fuelLevel = fuellevelcomm.fuelLevel
             datos.fuelConsumption = fuelconsumptioncomm.litersPerHour
-            datos.troubleCodes = troublecodescomm.formattedResult
             listaDatos.add(datos)
             if (queryNum == 1) {
                 first_fuel = datos.fuelLevel
+                troubleCodes = troublecodescomm.formattedResult
             }
            lastTime = System.currentTimeMillis()
             last_fuel = datos.fuelLevel
@@ -194,11 +195,11 @@ class OBD2Recoletion(): Thread() {
         jsonWriter.name("speed_average").value(avgSpeed)
         jsonWriter.name("fuel_percentage").value(consumed_fuel)
         jsonWriter.name("duration").value(duration)
+        jsonWriter.name("trouble_codes").value(troubleCodes)
         jsonWriter.name("data").beginArray()
         listaDatos.forEach() {
             jsonWriter.beginObject()
             jsonWriter.name("timestamp").value(it.currentTime)
-            jsonWriter.name("trouble_codes").value(it.troubleCodes)
             jsonWriter.name("speed").value(it.speed)
             jsonWriter.name("rpm").value(it.rpm)
             jsonWriter.name("throttle").value(it.throttlePosition)
