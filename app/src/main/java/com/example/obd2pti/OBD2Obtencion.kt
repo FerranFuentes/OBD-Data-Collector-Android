@@ -20,7 +20,6 @@ import com.github.pires.obd.commands.temperature.AmbientAirTemperatureCommand
 import com.github.pires.obd.commands.temperature.EngineCoolantTemperatureCommand
 import java.io.File
 import java.io.FileWriter
-import java.time.LocalDate
 import java.time.LocalDateTime
 
 class OBD2Recoletion(): Thread() {
@@ -55,8 +54,8 @@ class OBD2Recoletion(): Thread() {
             letDirectory.mkdir()
         }
         //Get a string with the current date
-        val today = LocalDate.now().toString()
-        val file = File(letDirectory, "${today}.json")
+        val time = LocalDateTime.now()
+        val file = File(letDirectory, "${time}.json")
         if (!file.exists()) {
             file.createNewFile()
         }
@@ -64,14 +63,7 @@ class OBD2Recoletion(): Thread() {
        // file.writeText("")
         val fileWriter = FileWriter(file, true)
         val jsonWriter = JsonWriter(fileWriter)
-        jsonWriter.setIndent("  ")
-        //check if file is empty
-        if (file.length() == 0L) {
-            jsonWriter.beginObject()
-            jsonWriter.name("matricula").value(matricula)
-            jsonWriter.name("password").value(passwordHash)
-            jsonWriter.endObject()
-        }
+
 
         val listaDatos: MutableList<Datos> = mutableListOf()
 
@@ -101,17 +93,12 @@ class OBD2Recoletion(): Thread() {
         var fuelconsumptioncomm: ConsumptionRateCommand = ConsumptionRateCommand()
         var troublecodescomm: TroubleCodesCommand = TroubleCodesCommand()
 
-        var datos0 = Datos()
-        rpmcomm.run(socket.inputStream, socket.outputStream)
-        speedcomm.run(socket.inputStream, socket.outputStream)
-        val current0 = LocalDateTime.now()
 
-        datos0.currentTime = current0.toString()
-        datos0.speed = speedcomm.metricSpeed
-        datos0.rpm = rpmcomm.rpm
-        listaDatos.add(datos0)
+        var velocidades: MutableList<Int> = mutableListOf()
 
         var queryNum = 0
+        var lastTime = System.currentTimeMillis()
+        var firstTime = System.currentTimeMillis()
         recoleccion = true
         while (recoleccion) {
             // Toast.makeText(this, "Query: $queryNum", Toast.LENGTH_SHORT).show()
@@ -165,6 +152,7 @@ class OBD2Recoletion(): Thread() {
             datos.matricula = matricula
             datos.currentTime = current.toString()
             datos.speed = speedcomm.metricSpeed
+            velocidades.add(datos.speed)
             datos.rpm = rpmcomm.rpm
             datos.throttlePosition = throttlecomm.percentage
             datos.engineLoad = engineloadcomm.percentage
@@ -174,10 +162,21 @@ class OBD2Recoletion(): Thread() {
             datos.fuelConsumption = fuelconsumptioncomm.litersPerHour
             datos.troubleCodes = troublecodescomm.formattedResult
             listaDatos.add(datos)
+           lastTime = System.currentTimeMillis()
             ++queryNum
             Thread.sleep(750)
         }
-        jsonWriter.beginArray()
+        val avgSpeed = velocidades.average();
+        val duration = (lastTime - firstTime) / 1000
+        val km = avgSpeed * (duration / 3600)
+        jsonWriter.beginObject()
+        jsonWriter.name("matricula").value(matricula)
+        jsonWriter.name("password").value(passwordHash)
+        jsonWriter.name("km").value(km)
+        jsonWriter.name("max_speed").value(velocidades.max())
+        jsonWriter.name("speed_average").value(avgSpeed)
+        jsonWriter.name("duration").value(duration)
+        jsonWriter.name("data").beginArray()
         listaDatos.forEach() {
             jsonWriter.beginObject()
             jsonWriter.name("timestamp").value(it.currentTime)
@@ -193,6 +192,7 @@ class OBD2Recoletion(): Thread() {
             jsonWriter.endObject()
         }
         jsonWriter.endArray()
+        jsonWriter.endObject()
         jsonWriter.close()
         fileWriter.close()
         return
