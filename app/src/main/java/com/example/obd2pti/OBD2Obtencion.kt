@@ -168,7 +168,7 @@ class OBD2Recoletion(): Thread() {
         }
         val avgSpeed = velocidades.average();
         val duration = (lastTime - firstTime) / 1000
-        val km = avgSpeed * (duration / 3600)
+        val km = avgSpeed * (duration.toDouble() / 3600)
         jsonWriter.beginObject()
         jsonWriter.name("matricula").value(matricula)
         jsonWriter.name("password").value(passwordHash)
