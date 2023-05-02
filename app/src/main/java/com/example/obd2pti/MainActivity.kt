@@ -510,6 +510,7 @@ private const val LOCATION_PERMISSION_REQUEST_CODE = 2
 
          //httpAsync.join()
          //check if there is a wifi connection
+         var ficherosSubidos = ArrayList<File>()
          val connectivityManager =
              getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
          val activeNetworkInfo = connectivityManager.activeNetworkInfo
@@ -538,9 +539,10 @@ private const val LOCATION_PERMISSION_REQUEST_CODE = 2
                                  is Result.Success -> {
                                      val data = result.get()
                                      println(data)
-                                     Toast.makeText(this, "Datos subidos", Toast.LENGTH_SHORT)
+                                     Toast.makeText(this, "Datos subidos ${it.name}", Toast.LENGTH_SHORT)
                                          .show()
                                      Toast.makeText(this, data, Toast.LENGTH_SHORT).show()
+                                     ficherosSubidos.add(it)
                                  }
                              }
                          }
@@ -570,9 +572,10 @@ private const val LOCATION_PERMISSION_REQUEST_CODE = 2
                                  is Result.Success -> {
                                      val data = result.get()
                                      println(data)
-                                     Toast.makeText(this, "Datos subidos", Toast.LENGTH_SHORT)
+                                     Toast.makeText(this, "Datos subidos de ${it.name}", Toast.LENGTH_SHORT)
                                          .show()
                                      Toast.makeText(this, data, Toast.LENGTH_SHORT).show()
+                                     ficherosSubidos.add(it)
                                  }
                              }
                          }
@@ -580,6 +583,11 @@ private const val LOCATION_PERMISSION_REQUEST_CODE = 2
                  }
              }
      }
+         ficherosSubidos.forEach(){
+             //it.delete()
+             Toast.makeText(this, "Borrando ${it.name}", Toast.LENGTH_SHORT).show()
+         }
+
 
      }
 
