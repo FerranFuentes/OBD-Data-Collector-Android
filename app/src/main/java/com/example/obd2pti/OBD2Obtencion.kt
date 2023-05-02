@@ -53,14 +53,6 @@ class OBD2Recoletion(): Thread() {
         if (!letDirectory.exists()) {
             letDirectory.mkdir()
         }
-        var trip:Int = 0
-        val tripFile = File(path, "trip.txt")
-        try {
-            trip = tripFile.readText().toInt()
-        } catch (e:Exception) {
-            tripFile.createNewFile()
-            tripFile.writeText("0")
-        }
         //Get a string with the current date
         val time = LocalDateTime.now()
         val file = File(letDirectory, "${time}.json")
@@ -188,7 +180,6 @@ class OBD2Recoletion(): Thread() {
         jsonWriter.beginObject()
         jsonWriter.name("matricula").value(matricula)
         jsonWriter.name("hash").value(passwordHash)
-        jsonWriter.name("trip").value(trip)
         jsonWriter.name("km").value(km.toInt())
         jsonWriter.name("max_speed").value(velocidades.max())
         jsonWriter.name("speed_average").value(avgSpeed)
@@ -213,8 +204,6 @@ class OBD2Recoletion(): Thread() {
         jsonWriter.endObject()
         jsonWriter.close()
         fileWriter.close()
-        ++trip
-        tripFile.writeText(trip.toString())
         return
     }
 
