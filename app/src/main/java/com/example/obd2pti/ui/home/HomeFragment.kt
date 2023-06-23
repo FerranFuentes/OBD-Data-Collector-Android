@@ -7,11 +7,13 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
+import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import com.example.obd2pti.MainActivity
 import com.example.obd2pti.databinding.FragmentHomeBinding
+import java.io.File
 
 class HomeFragment : Fragment() {
 
@@ -67,6 +69,19 @@ class HomeFragment : Fragment() {
 
         binding.uploadButton.setOnClickListener {
             mainAct.uploadData()
+        }
+
+        binding.changeurlButton.setOnClickListener {
+            var url: String = binding.urlText.text.toString()
+            val path = mainAct.workingPath
+            val file = File(path, "url.txt")
+            if (!file.exists()) {
+                file.createNewFile()
+            }
+            //Write text to file
+            file.writeText("");
+            file.writeText(url)
+            Toast.makeText(mainAct, "URL cambiada a: " + url, Toast.LENGTH_SHORT).show()
         }
 
         return root

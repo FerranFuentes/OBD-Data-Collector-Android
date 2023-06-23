@@ -51,6 +51,7 @@ private const val LOCATION_PERMISSION_REQUEST_CODE = 2
      private val MY_UUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB")
      var workingPath:File = File("")
      var onlyWiFi = false
+     var url:String = ""
 
 
      //abstract var inputStream:InputStream
@@ -489,27 +490,11 @@ private const val LOCATION_PERMISSION_REQUEST_CODE = 2
         }
 
      fun uploadData() {
-         /*val httpAsync = "https://httpbin.org/get"
-             .httpGet()
-             .responseString { request, response, result ->
-                 when (result) {
-                     is Result.Failure -> {
-                         val ex = result.getException()
-                         println(ex)
-                         Toast.makeText(this, "Error al subir datos", Toast.LENGTH_SHORT).show()
-                         Toast.makeText(this, ex.toString(), Toast.LENGTH_SHORT).show()
-                     }
-                     is Result.Success -> {
-                         val data = result.get()
-                         println(data)
-                        Toast.makeText(this, "Datos subidos", Toast.LENGTH_SHORT).show()
-                         Toast.makeText(this, data, Toast.LENGTH_SHORT).show()
-                     }
-                 }
-             }*/
-
-         //httpAsync.join()
-         //check if there is a wifi connection
+         val file = File(workingPath, "url.txt")
+         if (!file.exists()) {
+             file.createNewFile()
+         }
+         val url = file.readText()
          var ficherosSubidos = ArrayList<File>()
          val connectivityManager =
              getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
@@ -519,7 +504,7 @@ private const val LOCATION_PERMISSION_REQUEST_CODE = 2
              Toast.makeText(this, "Conectado a wifi", Toast.LENGTH_SHORT).show()
              exportDirectory.walk().forEach {
                  if (it.isFile) {
-                     val httpPostAsync = "http://nattech.fib.upc.edu:40400/api/mobile/trip"
+                     val httpPostAsync = url
                          .httpPost()
                          .body(it.readText())
                          .header("Content-Type", "application/json")
@@ -553,7 +538,7 @@ private const val LOCATION_PERMISSION_REQUEST_CODE = 2
          } else if (!onlyWiFi){
              exportDirectory.walk().forEach {
                  if (it.isFile) {
-                     val httpPostAsync = "http://nattech.fib.upc.edu:40400/api/mobile/trip"
+                     val httpPostAsync = url
                          .httpPost()
                          .body(it.readText())
                          .header("Content-Type", "application/json")
